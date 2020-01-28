@@ -9,7 +9,7 @@
 <img width="200" height="100" src="logo.png">
 <h1>Simd Library Release Notes (2019).</h1>
 <a href="index.html">Home</a> |
-<a href="2019.html">Release Notes</a> | 
+<a href="2020.html">Release Notes</a> | 
 <a href="download.html">Download</a> | 
 <a href="help/index.html">Documentation</a> | 
 <a href="http://github.com/ermig1979/Simd/issues">Issues</a> | 
@@ -19,6 +19,7 @@
 </td></tr><tr><td>
 
 <center>
+ <a href="2020.html">2020</a> |
  <a href="2019.html">2019</a> |
  <a href="2018.html">2018</a> |
  <a href="2017.html">2017</a> |
@@ -30,17 +31,30 @@
 
 <hr/>
 
-<h3 id="R084">December X, 2019 (version X.X.84)</h3>
+<h3 id="R084">December 2, 2019 (version 4.4.84)</h3>
 
 <h4>Algorithms</h4>
 <h5>New features</h5>
 <ul>
  <li>Method View::Clear.</li>
  <li>Parameter makeCopy in method ShiftDetector::SetBackground.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function SynetPoolingForwardAverage.</li>
+</ul>
+<h5>Improving</h5>
+<ul>
+ <li>SSE, AVX, AVX2, AVX-512F and NEON optimizations of Convolution32f framework.</li>
 </ul>
 <h5>Bug fixing</h5>
 <ul>
  <li>Crash when defined SIMD_PERFORMANCE_STATISTIC.</li>
+ <li>Compiler warning in SSSE3 and AVX2 optimizations of Resizer.</li>
+ <li>Error in base implementation of function SquaredDifferenceKahanSum32f (Visual Studio 2019).</li>
+</ul>
+
+<h4>Test framework</h4>
+<h5>New features</h5>
+<ul>
+ <li>Tests for verifying functionality of function SynetPoolingForwardAverage.</li>
 </ul>
 
 <a href="#HOME">Home</a> 
@@ -630,6 +644,7 @@
 <hr/> 
 
 <center>
+ <a href="2020.html">2020</a> |
  <a href="2019.html">2019</a> |
  <a href="2018.html">2018</a> |
  <a href="2017.html">2017</a> |

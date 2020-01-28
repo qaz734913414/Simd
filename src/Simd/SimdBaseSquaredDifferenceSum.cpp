@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2017 Yermalayeu Ihar.
+* Copyright (c) 2011-2019 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -102,7 +102,9 @@ namespace Simd
 #pragma GCC push_options
 #pragma GCC optimize ("O1")
 #endif
-#endif        
+#elif defined(_MSC_VER) && (_MSC_VER >= 1920)
+#pragma optimize ("", off)
+#endif
         void SquaredDifferenceKahanSum32f(const float * a, const float * b, size_t size, float * sum)
         {
             size_t alignedSize = Simd::AlignLo(size, 4);
@@ -126,6 +128,8 @@ namespace Simd
 #else
 #pragma GCC pop_options
 #endif 
-#endif    
+#elif defined(_MSC_VER) && (_MSC_VER >= 1920)
+#pragma optimize ("", on)
+#endif
     }
 }

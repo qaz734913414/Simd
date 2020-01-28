@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -186,6 +186,204 @@ namespace Simd
             AddProduct(C + 1 * ldc, _alpha, c1, mask);
             AddProduct(C + 2 * ldc, _alpha, c2, mask);
             AddProduct(C + 3 * ldc, _alpha, c3, mask);
+        }
+
+        void GemmKernel6x64nn(size_t K, float alpha, const float* A, size_t lda, const float* B, size_t ldb, size_t sb, float* C, size_t ldc, __mmask16 mask)
+        {
+            __m512 c00 = _mm512_setzero_ps();
+            __m512 c10 = _mm512_setzero_ps();
+            __m512 c20 = _mm512_setzero_ps();
+            __m512 c30 = _mm512_setzero_ps();
+            __m512 c40 = _mm512_setzero_ps();
+            __m512 c50 = _mm512_setzero_ps();
+            __m512 c01 = _mm512_setzero_ps();
+            __m512 c11 = _mm512_setzero_ps();
+            __m512 c21 = _mm512_setzero_ps();
+            __m512 c31 = _mm512_setzero_ps();
+            __m512 c41 = _mm512_setzero_ps();
+            __m512 c51 = _mm512_setzero_ps();
+            __m512 c02 = _mm512_setzero_ps();
+            __m512 c12 = _mm512_setzero_ps();
+            __m512 c22 = _mm512_setzero_ps();
+            __m512 c32 = _mm512_setzero_ps();
+            __m512 c42 = _mm512_setzero_ps();
+            __m512 c52 = _mm512_setzero_ps();
+            __m512 c03 = _mm512_setzero_ps();
+            __m512 c13 = _mm512_setzero_ps();
+            __m512 c23 = _mm512_setzero_ps();
+            __m512 c33 = _mm512_setzero_ps();
+            __m512 c43 = _mm512_setzero_ps();
+            __m512 c53 = _mm512_setzero_ps();
+            const size_t oa0 = lda * 0;
+            const size_t oa1 = lda * 1;
+            const size_t oa2 = lda * 2;
+            const size_t oa3 = lda * 3;
+            const size_t oa4 = lda * 4;
+            const size_t oa5 = lda * 5;
+            const size_t sa = lda == 1 ? 6 : 1;
+            const size_t ob0 = ldb * 0;
+            const size_t ob1 = ldb * 1;
+            const size_t ob2 = ldb * 2;
+            const size_t ob3 = ldb * 3;
+            __m512 b0, b1, b2, b3, a0;
+            for (size_t k = 0; k < K; k++)
+            {
+                b0 = _mm512_loadu_ps(B + ob0);
+                b1 = _mm512_loadu_ps(B + ob1);
+                b2 = _mm512_loadu_ps(B + ob2);
+                b3 = _mm512_loadu_ps(B + ob3);
+                a0 = _mm512_set1_ps(A[oa0]);
+                c00 = _mm512_fmadd_ps(a0, b0, c00);
+                c01 = _mm512_fmadd_ps(a0, b1, c01);
+                c02 = _mm512_fmadd_ps(a0, b2, c02);
+                c03 = _mm512_fmadd_ps(a0, b3, c03);
+                a0 = _mm512_set1_ps(A[oa1]);
+                c10 = _mm512_fmadd_ps(a0, b0, c10);
+                c11 = _mm512_fmadd_ps(a0, b1, c11);
+                c12 = _mm512_fmadd_ps(a0, b2, c12);
+                c13 = _mm512_fmadd_ps(a0, b3, c13);
+                a0 = _mm512_set1_ps(A[oa2]);
+                c20 = _mm512_fmadd_ps(a0, b0, c20);
+                c21 = _mm512_fmadd_ps(a0, b1, c21);
+                c22 = _mm512_fmadd_ps(a0, b2, c22);
+                c23 = _mm512_fmadd_ps(a0, b3, c23);
+                a0 = _mm512_set1_ps(A[oa3]);
+                c30 = _mm512_fmadd_ps(a0, b0, c30);
+                c31 = _mm512_fmadd_ps(a0, b1, c31);
+                c32 = _mm512_fmadd_ps(a0, b2, c32);
+                c33 = _mm512_fmadd_ps(a0, b3, c33);
+                a0 = _mm512_set1_ps(A[oa4]);
+                c40 = _mm512_fmadd_ps(a0, b0, c40);
+                c41 = _mm512_fmadd_ps(a0, b1, c41);
+                c42 = _mm512_fmadd_ps(a0, b2, c42);
+                c43 = _mm512_fmadd_ps(a0, b3, c43);
+                a0 = _mm512_set1_ps(A[oa5]);
+                c50 = _mm512_fmadd_ps(a0, b0, c50);
+                c51 = _mm512_fmadd_ps(a0, b1, c51);
+                c52 = _mm512_fmadd_ps(a0, b2, c52);
+                c53 = _mm512_fmadd_ps(a0, b3, c53);
+                B += sb;
+                A += sa;
+            }
+            __m512 _alpha = _mm512_set1_ps(alpha);
+            AddProduct(C + 0 * F, _alpha, c00);
+            AddProduct(C + 1 * F, _alpha, c01);
+            AddProduct(C + 2 * F, _alpha, c02);
+            AddProduct(C + 3 * F, _alpha, c03, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c10);
+            AddProduct(C + 1 * F, _alpha, c11);
+            AddProduct(C + 2 * F, _alpha, c12);
+            AddProduct(C + 3 * F, _alpha, c13, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c20);
+            AddProduct(C + 1 * F, _alpha, c21);
+            AddProduct(C + 2 * F, _alpha, c22);
+            AddProduct(C + 3 * F, _alpha, c23, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c30);
+            AddProduct(C + 1 * F, _alpha, c31);
+            AddProduct(C + 2 * F, _alpha, c32);
+            AddProduct(C + 3 * F, _alpha, c33, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c40);
+            AddProduct(C + 1 * F, _alpha, c41);
+            AddProduct(C + 2 * F, _alpha, c42);
+            AddProduct(C + 3 * F, _alpha, c43, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c50);
+            AddProduct(C + 1 * F, _alpha, c51);
+            AddProduct(C + 2 * F, _alpha, c52);
+            AddProduct(C + 3 * F, _alpha, c53, mask);
+        }
+
+        void GemmKernel6x48nn(size_t K, float alpha, const float* A, size_t lda, const float* B, size_t ldb, size_t sb, float* C, size_t ldc, __mmask16 mask)
+        {
+            __m512 c00 = _mm512_setzero_ps();
+            __m512 c10 = _mm512_setzero_ps();
+            __m512 c20 = _mm512_setzero_ps();
+            __m512 c30 = _mm512_setzero_ps();
+            __m512 c40 = _mm512_setzero_ps();
+            __m512 c50 = _mm512_setzero_ps();
+            __m512 c01 = _mm512_setzero_ps();
+            __m512 c11 = _mm512_setzero_ps();
+            __m512 c21 = _mm512_setzero_ps();
+            __m512 c31 = _mm512_setzero_ps();
+            __m512 c41 = _mm512_setzero_ps();
+            __m512 c51 = _mm512_setzero_ps();
+            __m512 c02 = _mm512_setzero_ps();
+            __m512 c12 = _mm512_setzero_ps();
+            __m512 c22 = _mm512_setzero_ps();
+            __m512 c32 = _mm512_setzero_ps();
+            __m512 c42 = _mm512_setzero_ps();
+            __m512 c52 = _mm512_setzero_ps();
+            const size_t oa0 = lda * 0;
+            const size_t oa1 = lda * 1;
+            const size_t oa2 = lda * 2;
+            const size_t oa3 = lda * 3;
+            const size_t oa4 = lda * 4;
+            const size_t oa5 = lda * 5;
+            const size_t sa = lda == 1 ? 6 : 1;
+            const size_t ob0 = ldb * 0;
+            const size_t ob1 = ldb * 1;
+            const size_t ob2 = ldb * 2;
+            __m512 b0, b1, b2, a0;
+            for (size_t k = 0; k < K; k++)
+            {
+                b0 = _mm512_loadu_ps(B + ob0);
+                b1 = _mm512_loadu_ps(B + ob1);
+                b2 = _mm512_loadu_ps(B + ob2);
+                a0 = _mm512_set1_ps(A[oa0]);
+                c00 = _mm512_fmadd_ps(a0, b0, c00);
+                c01 = _mm512_fmadd_ps(a0, b1, c01);
+                c02 = _mm512_fmadd_ps(a0, b2, c02);
+                a0 = _mm512_set1_ps(A[oa1]);
+                c10 = _mm512_fmadd_ps(a0, b0, c10);
+                c11 = _mm512_fmadd_ps(a0, b1, c11);
+                c12 = _mm512_fmadd_ps(a0, b2, c12);
+                a0 = _mm512_set1_ps(A[oa2]);
+                c20 = _mm512_fmadd_ps(a0, b0, c20);
+                c21 = _mm512_fmadd_ps(a0, b1, c21);
+                c22 = _mm512_fmadd_ps(a0, b2, c22);
+                a0 = _mm512_set1_ps(A[oa3]);
+                c30 = _mm512_fmadd_ps(a0, b0, c30);
+                c31 = _mm512_fmadd_ps(a0, b1, c31);
+                c32 = _mm512_fmadd_ps(a0, b2, c32);
+                a0 = _mm512_set1_ps(A[oa4]);
+                c40 = _mm512_fmadd_ps(a0, b0, c40);
+                c41 = _mm512_fmadd_ps(a0, b1, c41);
+                c42 = _mm512_fmadd_ps(a0, b2, c42);
+                a0 = _mm512_set1_ps(A[oa5]);
+                c50 = _mm512_fmadd_ps(a0, b0, c50);
+                c51 = _mm512_fmadd_ps(a0, b1, c51);
+                c52 = _mm512_fmadd_ps(a0, b2, c52);
+                B += sb;
+                A += sa;
+            }
+            __m512 _alpha = _mm512_set1_ps(alpha);
+            AddProduct(C + 0 * F, _alpha, c00);
+            AddProduct(C + 1 * F, _alpha, c01);
+            AddProduct(C + 2 * F, _alpha, c02, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c10);
+            AddProduct(C + 1 * F, _alpha, c11);
+            AddProduct(C + 2 * F, _alpha, c12, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c20);
+            AddProduct(C + 1 * F, _alpha, c21);
+            AddProduct(C + 2 * F, _alpha, c22, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c30);
+            AddProduct(C + 1 * F, _alpha, c31);
+            AddProduct(C + 2 * F, _alpha, c32, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c40);
+            AddProduct(C + 1 * F, _alpha, c41);
+            AddProduct(C + 2 * F, _alpha, c42, mask);
+            C += ldc;
+            AddProduct(C + 0 * F, _alpha, c50);
+            AddProduct(C + 1 * F, _alpha, c51);
+            AddProduct(C + 2 * F, _alpha, c52, mask);
         }
 
         void GemmKernel6x32nn(size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, size_t sb, float * C, size_t ldc, __mmask16 mask)
@@ -1408,6 +1606,51 @@ namespace Simd
                 AddProduct(C + i * ldc, _alpha, c[i], mask);
         }
 
+        template<int M> void GemmKernelMx64nnT(size_t, size_t K, float alpha, const float* A, size_t lda, const float* B, size_t ldb, size_t sb, float* C, size_t ldc, __mmask16 mask)
+        {
+            __m512 c00, c01, c02, c03, c04, c05, c10, c11, c12, c13, c14, c15, c20, c21, c22, c23, c24, c25, c30, c31, c32, c33, c34, c35, b0, b1, b2, b3, a0;
+            if (M > 0x0) c00 = _mm512_setzero_ps(), c10 = _mm512_setzero_ps(), c20 = _mm512_setzero_ps(), c30 = _mm512_setzero_ps();
+            if (M > 0x1) c01 = _mm512_setzero_ps(), c11 = _mm512_setzero_ps(), c21 = _mm512_setzero_ps(), c31 = _mm512_setzero_ps();
+            if (M > 0x2) c02 = _mm512_setzero_ps(), c12 = _mm512_setzero_ps(), c22 = _mm512_setzero_ps(), c32 = _mm512_setzero_ps();
+            if (M > 0x3) c03 = _mm512_setzero_ps(), c13 = _mm512_setzero_ps(), c23 = _mm512_setzero_ps(), c33 = _mm512_setzero_ps();
+            if (M > 0x4) c04 = _mm512_setzero_ps(), c14 = _mm512_setzero_ps(), c24 = _mm512_setzero_ps(), c34 = _mm512_setzero_ps();
+            if (M > 0x5) c05 = _mm512_setzero_ps(), c15 = _mm512_setzero_ps(), c25 = _mm512_setzero_ps(), c35 = _mm512_setzero_ps();
+            size_t oa0, oa1, oa2, oa3, oa4, oa5;
+            if (M > 0) oa0 = lda * 0;
+            if (M > 1) oa1 = lda * 1;
+            if (M > 2) oa2 = lda * 2;
+            if (M > 3) oa3 = lda * 3;
+            if (M > 4) oa4 = lda * 4;
+            if (M > 5) oa5 = lda * 5;
+            const size_t sa = lda == 1 ? M : 1;
+            const size_t ob0 = ldb * 0;
+            const size_t ob1 = ldb * 1;
+            const size_t ob2 = ldb * 2;
+            const size_t ob3 = ldb * 3;
+            for (size_t k = 0; k < K; k++)
+            {
+                b0 = _mm512_loadu_ps(B + ob0);
+                b1 = _mm512_loadu_ps(B + ob1);
+                b2 = _mm512_loadu_ps(B + ob2);
+                b3 = _mm512_loadu_ps(B + ob3);
+                if (M > 0x0) a0 = _mm512_set1_ps(A[oa0]), c00 = _mm512_fmadd_ps(a0, b0, c00), c10 = _mm512_fmadd_ps(a0, b1, c10), c20 = _mm512_fmadd_ps(a0, b2, c20), c30 = _mm512_fmadd_ps(a0, b3, c30);
+                if (M > 0x1) a0 = _mm512_set1_ps(A[oa1]), c01 = _mm512_fmadd_ps(a0, b0, c01), c11 = _mm512_fmadd_ps(a0, b1, c11), c21 = _mm512_fmadd_ps(a0, b2, c21), c31 = _mm512_fmadd_ps(a0, b3, c31);
+                if (M > 0x2) a0 = _mm512_set1_ps(A[oa2]), c02 = _mm512_fmadd_ps(a0, b0, c02), c12 = _mm512_fmadd_ps(a0, b1, c12), c22 = _mm512_fmadd_ps(a0, b2, c22), c32 = _mm512_fmadd_ps(a0, b3, c32);
+                if (M > 0x3) a0 = _mm512_set1_ps(A[oa3]), c03 = _mm512_fmadd_ps(a0, b0, c03), c13 = _mm512_fmadd_ps(a0, b1, c13), c23 = _mm512_fmadd_ps(a0, b2, c23), c33 = _mm512_fmadd_ps(a0, b3, c33);
+                if (M > 0x4) a0 = _mm512_set1_ps(A[oa4]), c04 = _mm512_fmadd_ps(a0, b0, c04), c14 = _mm512_fmadd_ps(a0, b1, c14), c24 = _mm512_fmadd_ps(a0, b2, c24), c34 = _mm512_fmadd_ps(a0, b3, c34);
+                if (M > 0x5) a0 = _mm512_set1_ps(A[oa5]), c05 = _mm512_fmadd_ps(a0, b0, c05), c15 = _mm512_fmadd_ps(a0, b1, c15), c25 = _mm512_fmadd_ps(a0, b2, c25), c35 = _mm512_fmadd_ps(a0, b3, c35);
+                B += sb;
+                A += sa;
+            }
+            __m512 _alpha = _mm512_set1_ps(alpha);
+            if (M > 0x0) AddProduct(C + 0 * F, _alpha, c00), AddProduct(C + 1 * F, _alpha, c10), AddProduct(C + 2 * F, _alpha, c20), AddProduct(C + 3 * F, _alpha, c30, mask), C += ldc;
+            if (M > 0x1) AddProduct(C + 0 * F, _alpha, c01), AddProduct(C + 1 * F, _alpha, c11), AddProduct(C + 2 * F, _alpha, c21), AddProduct(C + 3 * F, _alpha, c31, mask), C += ldc;
+            if (M > 0x2) AddProduct(C + 0 * F, _alpha, c02), AddProduct(C + 1 * F, _alpha, c12), AddProduct(C + 2 * F, _alpha, c22), AddProduct(C + 3 * F, _alpha, c32, mask), C += ldc;
+            if (M > 0x3) AddProduct(C + 0 * F, _alpha, c03), AddProduct(C + 1 * F, _alpha, c13), AddProduct(C + 2 * F, _alpha, c23), AddProduct(C + 3 * F, _alpha, c33, mask), C += ldc;
+            if (M > 0x4) AddProduct(C + 0 * F, _alpha, c04), AddProduct(C + 1 * F, _alpha, c14), AddProduct(C + 2 * F, _alpha, c24), AddProduct(C + 3 * F, _alpha, c34, mask), C += ldc;
+            if (M > 0x5) AddProduct(C + 0 * F, _alpha, c05), AddProduct(C + 1 * F, _alpha, c15), AddProduct(C + 2 * F, _alpha, c25), AddProduct(C + 3 * F, _alpha, c35, mask), C += ldc;
+        }
+
         template<int M> void GemmKernelMx48nnT(size_t, size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, size_t sb, float * C, size_t ldc, __mmask16 mask)
         {
             __m512 c00, c01, c02, c03, c04, c05, c06, c07, c08, c10, c11, c12, c13, c14, c15, c16, c17, c18, c20, c21, c22, c23, c24, c25, c26, c27, c28, b0, b1, b2, a0;
@@ -1654,56 +1897,505 @@ namespace Simd
                 case 8: return GemmKernelMx48nnT<8>;
                 }
             }
+            else if (N <= 64)
+            {
+                switch (M)
+                {
+                case 0: return GemmKernelMx64nnT<0>;
+                case 1: return GemmKernelMx64nnT<1>;
+                case 2: return GemmKernelMx64nnT<2>;
+                case 3: return GemmKernelMx64nnT<3>;
+                case 4: return GemmKernelMx64nnT<4>;
+                case 5: return GemmKernelMx64nnT<5>;
+                }
+            }
             assert(0);
             return NULL;
         }
 
-        void GemmPackA(const float * src, size_t stride, size_t M, size_t K, size_t cell, float * dst)
+        SIMD_INLINE void GemmPackA_4x16(const float* src, size_t stride, float* dst)
         {
-            size_t K4 = AlignLo(K, 4), K8 = AlignLo(K, 8);
+            __m512 s0 = _mm512_loadu_ps(src + 0 * stride);
+            __m512 s1 = _mm512_loadu_ps(src + 1 * stride);
+            __m512 s2 = _mm512_loadu_ps(src + 2 * stride);
+            __m512 s3 = _mm512_loadu_ps(src + 3 * stride);
+            __m512 s020 = Interleave<0>(s0, s2);
+            __m512 s021 = Interleave<1>(s0, s2);
+            __m512 s130 = Interleave<0>(s1, s3);
+            __m512 s131 = Interleave<1>(s1, s3);
+            _mm512_storeu_ps(dst + 0x00, Interleave<0>(s020, s130));
+            _mm512_storeu_ps(dst + 0x10, Interleave<1>(s020, s130));
+            _mm512_storeu_ps(dst + 0x20, Interleave<0>(s021, s131));
+            _mm512_storeu_ps(dst + 0x30, Interleave<1>(s021, s131));
+        }
+
+        SIMD_INLINE void GemmPackA_4x8(const float* src, size_t stride, float* dst)
+        {
+            __m256 s0 = _mm256_loadu_ps(src + 0 * stride);
+            __m256 s1 = _mm256_loadu_ps(src + 1 * stride);
+            __m256 s2 = _mm256_loadu_ps(src + 2 * stride);
+            __m256 s3 = _mm256_loadu_ps(src + 3 * stride);
+            __m256 s00 = _mm256_unpacklo_ps(s0, s2);
+            __m256 s01 = _mm256_unpacklo_ps(s1, s3);
+            __m256 s10 = _mm256_unpackhi_ps(s0, s2);
+            __m256 s11 = _mm256_unpackhi_ps(s1, s3);
+            __m256 d0 = _mm256_unpacklo_ps(s00, s01);
+            __m256 d1 = _mm256_unpackhi_ps(s00, s01);
+            __m256 d2 = _mm256_unpacklo_ps(s10, s11);
+            __m256 d3 = _mm256_unpackhi_ps(s10, s11);
+            _mm256_storeu_ps(dst + 0x00, _mm256_permute2f128_ps(d0, d1, 0x20));
+            _mm256_storeu_ps(dst + 0x08, _mm256_permute2f128_ps(d2, d3, 0x20));
+            _mm256_storeu_ps(dst + 0x10, _mm256_permute2f128_ps(d0, d1, 0x31));
+            _mm256_storeu_ps(dst + 0x18, _mm256_permute2f128_ps(d2, d3, 0x31));
+        }
+
+        SIMD_INLINE void GemmPackA_4x4(const float* src, size_t stride, float* dst)
+        {
+            __m128 s0 = _mm_loadu_ps(src + 0 * stride);
+            __m128 s1 = _mm_loadu_ps(src + 1 * stride);
+            __m128 s2 = _mm_loadu_ps(src + 2 * stride);
+            __m128 s3 = _mm_loadu_ps(src + 3 * stride);
+            __m128 s00 = _mm_unpacklo_ps(s0, s2);
+            __m128 s01 = _mm_unpacklo_ps(s1, s3);
+            __m128 s10 = _mm_unpackhi_ps(s0, s2);
+            __m128 s11 = _mm_unpackhi_ps(s1, s3);
+            _mm_storeu_ps(dst + 0, _mm_unpacklo_ps(s00, s01));
+            _mm_storeu_ps(dst + 4, _mm_unpackhi_ps(s00, s01));
+            _mm_storeu_ps(dst + 8, _mm_unpacklo_ps(s10, s11));
+            _mm_storeu_ps(dst + 12, _mm_unpackhi_ps(s10, s11));
+        }
+
+        const __m512i K32_PACKA6_0 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x04, 0x05, 0x06, 0x07, 0x12, 0x13, 0x08, 0x09, 0x0A, 0x0B);
+        const __m512i K32_PACKA6_1 = SIMD_MM512_SETR_EPI32(0x06, 0x07, 0x12, 0x13, 0x08, 0x09, 0x0A, 0x0B, 0x14, 0x15, 0x0C, 0x0D, 0x0E, 0x0F, 0x16, 0x17);
+        const __m512i K32_PACKA6_2 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x18, 0x19, 0x04, 0x05, 0x06, 0x07, 0x1A, 0x1B, 0x08, 0x09, 0x0A, 0x0B);
+        const __m512i K32_PACKA6_3 = SIMD_MM512_SETR_EPI32(0x06, 0x07, 0x1A, 0x1B, 0x08, 0x09, 0x0A, 0x0B, 0x1C, 0x1D, 0x0C, 0x0D, 0x0E, 0x0F, 0x1E, 0x1F);
+
+        SIMD_INLINE void GemmPackA_6x16(const float* src, size_t stride, float* dst)
+        {
+            __m512 s0 = _mm512_loadu_ps(src + 0 * stride);
+            __m512 s1 = _mm512_loadu_ps(src + 1 * stride);
+            __m512 s2 = _mm512_loadu_ps(src + 2 * stride);
+            __m512 s3 = _mm512_loadu_ps(src + 3 * stride);
+            __m512 s4 = _mm512_loadu_ps(src + 4 * stride);
+            __m512 s5 = _mm512_loadu_ps(src + 5 * stride);
+            __m512 s02_0 = Interleave<0>(s0, s2);
+            __m512 s02_1 = Interleave<1>(s0, s2);
+            __m512 s13_0 = Interleave<0>(s1, s3);
+            __m512 s13_1 = Interleave<1>(s1, s3);
+            __m512 s45_0 = Interleave<0>(s4, s5);
+            __m512 s45_1 = Interleave<1>(s4, s5);
+            __m512 s0123_0 = Interleave<0>(s02_0, s13_0);
+            __m512 s0123_1 = Interleave<1>(s02_0, s13_0);
+            __m512 s0123_2 = Interleave<0>(s02_1, s13_1);
+            __m512 s0123_3 = Interleave<1>(s02_1, s13_1);
+            _mm512_mask_storeu_ps(dst + 0x00, 0x0FFF, _mm512_permutex2var_ps(s0123_0, K32_PACKA6_0, s45_0));
+            _mm512_mask_storeu_ps(dst + 0x08, 0xFFF0, _mm512_permutex2var_ps(s0123_0, K32_PACKA6_1, s45_0));
+            _mm512_mask_storeu_ps(dst + 0x18, 0x0FFF, _mm512_permutex2var_ps(s0123_1, K32_PACKA6_2, s45_0));
+            _mm512_mask_storeu_ps(dst + 0x20, 0xFFF0, _mm512_permutex2var_ps(s0123_1, K32_PACKA6_3, s45_0));
+            _mm512_mask_storeu_ps(dst + 0x30, 0x0FFF, _mm512_permutex2var_ps(s0123_2, K32_PACKA6_0, s45_1));
+            _mm512_mask_storeu_ps(dst + 0x38, 0xFFF0, _mm512_permutex2var_ps(s0123_2, K32_PACKA6_1, s45_1));
+            _mm512_mask_storeu_ps(dst + 0x48, 0x0FFF, _mm512_permutex2var_ps(s0123_3, K32_PACKA6_2, s45_1));
+            _mm512_mask_storeu_ps(dst + 0x50, 0xFFF0, _mm512_permutex2var_ps(s0123_3, K32_PACKA6_3, s45_1));
+        }
+
+        SIMD_INLINE void GemmPackA_6x4(const float* src, size_t stride, float* dst)
+        {
+            __m128 s0 = _mm_loadu_ps(src + 0 * stride);
+            __m128 s1 = _mm_loadu_ps(src + 1 * stride);
+            __m128 s2 = _mm_loadu_ps(src + 2 * stride);
+            __m128 s3 = _mm_loadu_ps(src + 3 * stride);
+            __m128 s4 = _mm_loadu_ps(src + 4 * stride);
+            __m128 s5 = _mm_loadu_ps(src + 5 * stride);
+            __m128 s00 = _mm_unpacklo_ps(s0, s2);
+            __m128 s01 = _mm_unpacklo_ps(s1, s3);
+            __m128 s10 = _mm_unpackhi_ps(s0, s2);
+            __m128 s11 = _mm_unpackhi_ps(s1, s3);
+            __m128 s20 = _mm_unpacklo_ps(s4, s5);
+            __m128 s21 = _mm_unpackhi_ps(s4, s5);
+            _mm_storeu_ps(dst + 0, _mm_unpacklo_ps(s00, s01));
+            _mm_storel_pi((__m64*)(dst + 4), s20);
+            _mm_storeu_ps(dst + 6, _mm_unpackhi_ps(s00, s01));
+            _mm_storeh_pi((__m64*)(dst + 10), s20);
+            _mm_storeu_ps(dst + 12, _mm_unpacklo_ps(s10, s11));
+            _mm_storel_pi((__m64*)(dst + 16), s21);
+            _mm_storeu_ps(dst + 18, _mm_unpackhi_ps(s10, s11));
+            _mm_storeh_pi((__m64*)(dst + 22), s21);
+        }
+
+        SIMD_INLINE void GemmPackA_8x16(const float* src, size_t stride, float* dst)
+        {
+            __m512 s0 = _mm512_loadu_ps(src + 0 * stride);
+            __m512 s1 = _mm512_loadu_ps(src + 1 * stride);
+            __m512 s2 = _mm512_loadu_ps(src + 2 * stride);
+            __m512 s3 = _mm512_loadu_ps(src + 3 * stride);
+            __m512 s4 = _mm512_loadu_ps(src + 4 * stride);
+            __m512 s5 = _mm512_loadu_ps(src + 5 * stride);
+            __m512 s6 = _mm512_loadu_ps(src + 6 * stride);
+            __m512 s7 = _mm512_loadu_ps(src + 7 * stride);
+            __m512 s04_0 = Interleave<0>(s0, s4);
+            __m512 s04_1 = Interleave<1>(s0, s4);
+            __m512 s15_0 = Interleave<0>(s1, s5);
+            __m512 s15_1 = Interleave<1>(s1, s5);
+            __m512 s26_0 = Interleave<0>(s2, s6);
+            __m512 s26_1 = Interleave<1>(s2, s6);
+            __m512 s37_0 = Interleave<0>(s3, s7);
+            __m512 s37_1 = Interleave<1>(s3, s7);
+            __m512 s0246_0 = Interleave<0>(s04_0, s26_0);
+            __m512 s0246_1 = Interleave<1>(s04_0, s26_0);
+            __m512 s0246_2 = Interleave<0>(s04_1, s26_1);
+            __m512 s0246_3 = Interleave<1>(s04_1, s26_1);
+            __m512 s1357_0 = Interleave<0>(s15_0, s37_0);
+            __m512 s1357_1 = Interleave<1>(s15_0, s37_0);
+            __m512 s1357_2 = Interleave<0>(s15_1, s37_1);
+            __m512 s1357_3 = Interleave<1>(s15_1, s37_1);
+            _mm512_storeu_ps(dst + 0x00, Interleave<0>(s0246_0, s1357_0));
+            _mm512_storeu_ps(dst + 0x10, Interleave<1>(s0246_0, s1357_0));
+            _mm512_storeu_ps(dst + 0x20, Interleave<0>(s0246_1, s1357_1));
+            _mm512_storeu_ps(dst + 0x30, Interleave<1>(s0246_1, s1357_1));
+            _mm512_storeu_ps(dst + 0x40, Interleave<0>(s0246_2, s1357_2));
+            _mm512_storeu_ps(dst + 0x50, Interleave<1>(s0246_2, s1357_2));
+            _mm512_storeu_ps(dst + 0x60, Interleave<0>(s0246_3, s1357_3));
+            _mm512_storeu_ps(dst + 0x70, Interleave<1>(s0246_3, s1357_3));
+        }
+
+        SIMD_INLINE void GemmPackA_8x4(const float* src, size_t stride, float* dst)
+        {
+            __m128 s0 = _mm_loadu_ps(src + 0 * stride);
+            __m128 s1 = _mm_loadu_ps(src + 1 * stride);
+            __m128 s2 = _mm_loadu_ps(src + 2 * stride);
+            __m128 s3 = _mm_loadu_ps(src + 3 * stride);
+            __m128 s4 = _mm_loadu_ps(src + 4 * stride);
+            __m128 s5 = _mm_loadu_ps(src + 5 * stride);
+            __m128 s6 = _mm_loadu_ps(src + 6 * stride);
+            __m128 s7 = _mm_loadu_ps(src + 7 * stride);
+            __m128 s02_0 = _mm_unpacklo_ps(s0, s2);
+            __m128 s02_1 = _mm_unpackhi_ps(s0, s2);
+            __m128 s13_0 = _mm_unpacklo_ps(s1, s3);
+            __m128 s13_1 = _mm_unpackhi_ps(s1, s3);
+            __m128 s46_0 = _mm_unpacklo_ps(s4, s6);
+            __m128 s46_1 = _mm_unpackhi_ps(s4, s6);
+            __m128 s57_0 = _mm_unpacklo_ps(s5, s7);
+            __m128 s57_1 = _mm_unpackhi_ps(s5, s7);
+            _mm_storeu_ps(dst + 0x00, _mm_unpacklo_ps(s02_0, s13_0));
+            _mm_storeu_ps(dst + 0x04, _mm_unpacklo_ps(s46_0, s57_0));
+            _mm_storeu_ps(dst + 0x08, _mm_unpackhi_ps(s02_0, s13_0));
+            _mm_storeu_ps(dst + 0x0C, _mm_unpackhi_ps(s46_0, s57_0));
+            _mm_storeu_ps(dst + 0x10, _mm_unpacklo_ps(s02_1, s13_1));
+            _mm_storeu_ps(dst + 0x14, _mm_unpacklo_ps(s46_1, s57_1));
+            _mm_storeu_ps(dst + 0x18, _mm_unpackhi_ps(s02_1, s13_1));
+            _mm_storeu_ps(dst + 0x1C, _mm_unpackhi_ps(s46_1, s57_1));
+        }
+
+        const __m512i K32_PACKA9_0 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x10, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E);
+        const __m512i K32_PACKA9_1 = SIMD_MM512_SETR_EPI32(0x00, 0x11, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x12, 0x09, 0x0A, 0x0B, 0x0C, 0x0D);
+        const __m512i K32_PACKA9_2 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x13, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x14, 0x0B, 0x0C, 0x0D);
+        const __m512i K32_PACKA9_3 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x04, 0x15, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x16, 0x0D);
+        const __m512i K32_PACKA9_4 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x17, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E);
+        const __m512i K32_PACKA9_5 = SIMD_MM512_SETR_EPI32(0x18, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x19, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D);
+        const __m512i K32_PACKA9_6 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x1A, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x1B, 0x0A, 0x0B, 0x0C, 0x0D);
+        const __m512i K32_PACKA9_7 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x1C, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x1D, 0x0C, 0x0D);
+        const __m512i K32_PACKA9_8 = SIMD_MM512_SETR_EPI32(0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x1E, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x1F);
+
+        SIMD_INLINE void GemmPackA_9x16(const float* src, size_t stride, float* dst)
+        {
+            __m512 a[9], b[8];
+            a[0] = _mm512_loadu_ps(src + 0 * stride);
+            a[1] = _mm512_loadu_ps(src + 1 * stride);
+            a[2] = _mm512_loadu_ps(src + 2 * stride);
+            a[3] = _mm512_loadu_ps(src + 3 * stride);
+            a[4] = _mm512_loadu_ps(src + 4 * stride);
+            a[5] = _mm512_loadu_ps(src + 5 * stride);
+            a[6] = _mm512_loadu_ps(src + 6 * stride);
+            a[7] = _mm512_loadu_ps(src + 7 * stride);
+            a[8] = _mm512_loadu_ps(src + 8 * stride);
+            b[0] = Interleave<0>(a[0], a[4]);
+            b[1] = Interleave<1>(a[0], a[4]);
+            b[2] = Interleave<0>(a[1], a[5]);
+            b[3] = Interleave<1>(a[1], a[5]);
+            b[4] = Interleave<0>(a[2], a[6]);
+            b[5] = Interleave<1>(a[2], a[6]);
+            b[6] = Interleave<0>(a[3], a[7]);
+            b[7] = Interleave<1>(a[3], a[7]);
+            a[0] = Interleave<0>(b[0], b[4]);
+            a[1] = Interleave<1>(b[0], b[4]);
+            a[2] = Interleave<0>(b[1], b[5]);
+            a[3] = Interleave<1>(b[1], b[5]);
+            a[4] = Interleave<0>(b[2], b[6]);
+            a[5] = Interleave<1>(b[2], b[6]);
+            a[6] = Interleave<0>(b[3], b[7]);
+            a[7] = Interleave<1>(b[3], b[7]);
+            b[0] = Interleave<0>(a[0], a[4]);
+            b[1] = Interleave<1>(a[0], a[4]);
+            b[2] = Interleave<0>(a[1], a[5]);
+            b[3] = Interleave<1>(a[1], a[5]);
+            b[4] = Interleave<0>(a[2], a[6]);
+            b[5] = Interleave<1>(a[2], a[6]);
+            b[6] = Interleave<0>(a[3], a[7]);
+            b[7] = Interleave<1>(a[3], a[7]);
+            _mm512_storeu_ps(dst + 0x00, _mm512_permutex2var_ps(Alignr<0x0>(b[0], b[1]), K32_PACKA9_0, a[8]));
+            _mm512_storeu_ps(dst + 0x10, _mm512_permutex2var_ps(Alignr<0xF>(b[0], b[1]), K32_PACKA9_1, a[8]));
+            _mm512_storeu_ps(dst + 0x20, _mm512_permutex2var_ps(Alignr<0xD>(b[1], b[2]), K32_PACKA9_2, a[8]));
+            _mm512_storeu_ps(dst + 0x30, _mm512_permutex2var_ps(Alignr<0xB>(b[2], b[3]), K32_PACKA9_3, a[8]));
+            _mm512_storeu_ps(dst + 0x40, _mm512_permutex2var_ps(Alignr<0x9>(b[3], b[4]), K32_PACKA9_4, a[8]));
+            _mm512_storeu_ps(dst + 0x50, _mm512_permutex2var_ps(Alignr<0x8>(b[4], b[5]), K32_PACKA9_5, a[8]));
+            _mm512_storeu_ps(dst + 0x60, _mm512_permutex2var_ps(Alignr<0x6>(b[5], b[6]), K32_PACKA9_6, a[8]));
+            _mm512_storeu_ps(dst + 0x70, _mm512_permutex2var_ps(Alignr<0x4>(b[6], b[7]), K32_PACKA9_7, a[8]));
+            _mm512_storeu_ps(dst + 0x80, _mm512_permutex2var_ps(Alignr<0x0>(b[7], b[7]), K32_PACKA9_8, a[8]));
+        }
+
+        SIMD_INLINE void GemmPackA_9x4(const float* src, size_t stride, float* dst)
+        {
+            __m128 s0 = _mm_loadu_ps(src + 0 * stride);
+            __m128 s1 = _mm_loadu_ps(src + 1 * stride);
+            __m128 s2 = _mm_loadu_ps(src + 2 * stride);
+            __m128 s3 = _mm_loadu_ps(src + 3 * stride);
+            __m128 s4 = _mm_loadu_ps(src + 4 * stride);
+            __m128 s5 = _mm_loadu_ps(src + 5 * stride);
+            __m128 s6 = _mm_loadu_ps(src + 6 * stride);
+            __m128 s7 = _mm_loadu_ps(src + 7 * stride);
+            __m128 s02_0 = _mm_unpacklo_ps(s0, s2);
+            __m128 s02_1 = _mm_unpackhi_ps(s0, s2);
+            __m128 s13_0 = _mm_unpacklo_ps(s1, s3);
+            __m128 s13_1 = _mm_unpackhi_ps(s1, s3);
+            __m128 s46_0 = _mm_unpacklo_ps(s4, s6);
+            __m128 s46_1 = _mm_unpackhi_ps(s4, s6);
+            __m128 s57_0 = _mm_unpacklo_ps(s5, s7);
+            __m128 s57_1 = _mm_unpackhi_ps(s5, s7);
+            src += 8 * stride;
+            _mm_storeu_ps(dst + 0x00, _mm_unpacklo_ps(s02_0, s13_0));
+            _mm_storeu_ps(dst + 0x04, _mm_unpacklo_ps(s46_0, s57_0));
+            dst[0x08] = src[0];
+            _mm_storeu_ps(dst + 0x09, _mm_unpackhi_ps(s02_0, s13_0));
+            _mm_storeu_ps(dst + 0x0D, _mm_unpackhi_ps(s46_0, s57_0));
+            dst[0x11] = src[1];
+            _mm_storeu_ps(dst + 0x12, _mm_unpacklo_ps(s02_1, s13_1));
+            _mm_storeu_ps(dst + 0x16, _mm_unpacklo_ps(s46_1, s57_1));
+            dst[0x1A] = src[2];
+            _mm_storeu_ps(dst + 0x1B, _mm_unpackhi_ps(s02_1, s13_1));
+            _mm_storeu_ps(dst + 0x1F, _mm_unpackhi_ps(s46_1, s57_1));
+            dst[0x23] = src[3];
+        }
+
+        const __m512i K32_PACKA12_0 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x10, 0x11, 0x12, 0x13, 0x08, 0x09, 0x0A, 0x0B);
+        const __m512i K32_PACKA12_1 = SIMD_MM512_SETR_EPI32(0x10, 0x11, 0x12, 0x13, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x14, 0x15, 0x16, 0x17);
+        const __m512i K32_PACKA12_2 = SIMD_MM512_SETR_EPI32(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x18, 0x19, 0x1A, 0x1B, 0x08, 0x09, 0x0A, 0x0B);
+        const __m512i K32_PACKA12_3 = SIMD_MM512_SETR_EPI32(0x18, 0x19, 0x1A, 0x1B, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x1C, 0x1D, 0x1E, 0x1F);
+
+        SIMD_INLINE void GemmPackA_12x16(const float* src, size_t stride, float* dst)
+        {
+            __m512 a[12], b[12];
+            a[0] = _mm512_loadu_ps(src + 0 * stride);
+            a[1] = _mm512_loadu_ps(src + 1 * stride);
+            a[2] = _mm512_loadu_ps(src + 2 * stride);
+            a[3] = _mm512_loadu_ps(src + 3 * stride);
+            a[4] = _mm512_loadu_ps(src + 4 * stride);
+            a[5] = _mm512_loadu_ps(src + 5 * stride);
+            a[6] = _mm512_loadu_ps(src + 6 * stride);
+            a[7] = _mm512_loadu_ps(src + 7 * stride);
+            a[8] = _mm512_loadu_ps(src + 8 * stride);
+            a[9] = _mm512_loadu_ps(src + 9 * stride);
+            a[10] = _mm512_loadu_ps(src + 10 * stride);
+            a[11] = _mm512_loadu_ps(src + 11 * stride);
+            b[0] = Interleave<0>(a[0], a[4]);
+            b[1] = Interleave<1>(a[0], a[4]);
+            b[2] = Interleave<0>(a[1], a[5]);
+            b[3] = Interleave<1>(a[1], a[5]);
+            b[4] = Interleave<0>(a[2], a[6]);
+            b[5] = Interleave<1>(a[2], a[6]);
+            b[6] = Interleave<0>(a[3], a[7]);
+            b[7] = Interleave<1>(a[3], a[7]);
+            b[8] = Interleave<0>(a[8], a[10]);
+            b[9] = Interleave<1>(a[8], a[10]);
+            b[10] = Interleave<0>(a[9], a[11]);
+            b[11] = Interleave<1>(a[9], a[11]);
+            a[0] = Interleave<0>(b[0], b[4]);
+            a[1] = Interleave<1>(b[0], b[4]);
+            a[2] = Interleave<0>(b[1], b[5]);
+            a[3] = Interleave<1>(b[1], b[5]);
+            a[4] = Interleave<0>(b[2], b[6]);
+            a[5] = Interleave<1>(b[2], b[6]);
+            a[6] = Interleave<0>(b[3], b[7]);
+            a[7] = Interleave<1>(b[3], b[7]);
+            a[8] = Interleave<0>(b[8], b[10]);
+            a[9] = Interleave<1>(b[8], b[10]);
+            a[10] = Interleave<0>(b[9], b[11]);
+            a[11] = Interleave<1>(b[9], b[11]);
+            b[0] = Interleave<0>(a[0], a[4]);
+            b[1] = Interleave<1>(a[0], a[4]);
+            b[2] = Interleave<0>(a[1], a[5]);
+            b[3] = Interleave<1>(a[1], a[5]);
+            b[4] = Interleave<0>(a[2], a[6]);
+            b[5] = Interleave<1>(a[2], a[6]);
+            b[6] = Interleave<0>(a[3], a[7]);
+            b[7] = Interleave<1>(a[3], a[7]);
+            _mm512_mask_storeu_ps(dst + 0x00, 0x0FFF, _mm512_permutex2var_ps(b[0], K32_PACKA12_0, a[8]));
+            _mm512_mask_storeu_ps(dst + 0x08, 0xFFF0, _mm512_permutex2var_ps(b[0], K32_PACKA12_1, a[8]));
+            _mm512_mask_storeu_ps(dst + 0x18, 0x0FFF, _mm512_permutex2var_ps(b[1], K32_PACKA12_2, a[8]));
+            _mm512_mask_storeu_ps(dst + 0x20, 0xFFF0, _mm512_permutex2var_ps(b[1], K32_PACKA12_3, a[8]));
+            _mm512_mask_storeu_ps(dst + 0x30, 0x0FFF, _mm512_permutex2var_ps(b[2], K32_PACKA12_0, a[9]));
+            _mm512_mask_storeu_ps(dst + 0x38, 0xFFF0, _mm512_permutex2var_ps(b[2], K32_PACKA12_1, a[9]));
+            _mm512_mask_storeu_ps(dst + 0x48, 0x0FFF, _mm512_permutex2var_ps(b[3], K32_PACKA12_2, a[9]));
+            _mm512_mask_storeu_ps(dst + 0x50, 0xFFF0, _mm512_permutex2var_ps(b[3], K32_PACKA12_3, a[9]));
+            _mm512_mask_storeu_ps(dst + 0x60, 0x0FFF, _mm512_permutex2var_ps(b[4], K32_PACKA12_0, a[10]));
+            _mm512_mask_storeu_ps(dst + 0x68, 0xFFF0, _mm512_permutex2var_ps(b[4], K32_PACKA12_1, a[10]));
+            _mm512_mask_storeu_ps(dst + 0x78, 0x0FFF, _mm512_permutex2var_ps(b[5], K32_PACKA12_2, a[10]));
+            _mm512_mask_storeu_ps(dst + 0x80, 0xFFF0, _mm512_permutex2var_ps(b[5], K32_PACKA12_3, a[10]));
+            _mm512_mask_storeu_ps(dst + 0x90, 0x0FFF, _mm512_permutex2var_ps(b[6], K32_PACKA12_0, a[11]));
+            _mm512_mask_storeu_ps(dst + 0x98, 0xFFF0, _mm512_permutex2var_ps(b[6], K32_PACKA12_1, a[11]));
+            _mm512_mask_storeu_ps(dst + 0xA8, 0x0FFF, _mm512_permutex2var_ps(b[7], K32_PACKA12_2, a[11]));
+            _mm512_mask_storeu_ps(dst + 0xB0, 0xFFF0, _mm512_permutex2var_ps(b[7], K32_PACKA12_3, a[11]));
+        }
+
+        SIMD_INLINE void GemmPackA_12x4(const float * src, size_t stride, float * dst)
+        {
+            __m128 a[4], b[4];
+            for (size_t j = 0; j < 3; ++j)
+            {
+                a[0] = _mm_loadu_ps(src + 0 * stride);
+                a[1] = _mm_loadu_ps(src + 1 * stride);
+                a[2] = _mm_loadu_ps(src + 2 * stride);
+                a[3] = _mm_loadu_ps(src + 3 * stride);
+                b[0] = _mm_unpacklo_ps(a[0], a[2]);
+                b[1] = _mm_unpackhi_ps(a[0], a[2]);
+                b[2] = _mm_unpacklo_ps(a[1], a[3]);
+                b[3] = _mm_unpackhi_ps(a[1], a[3]);
+                _mm_storeu_ps(dst + 0x00, _mm_unpacklo_ps(b[0], b[2]));
+                _mm_storeu_ps(dst + 0x0C, _mm_unpackhi_ps(b[0], b[2]));
+                _mm_storeu_ps(dst + 0x18, _mm_unpacklo_ps(b[1], b[3]));
+                _mm_storeu_ps(dst + 0x24, _mm_unpackhi_ps(b[1], b[3]));
+                src += 4 * stride;
+                dst += 4;
+            }
+        }
+
+        SIMD_INLINE void GemmPackA_14x16(const float* src, size_t stride, float* dst)
+        {
+            __m512 a[16], b[4];
+            a[0] = _mm512_loadu_ps(src + 0 * stride);
+            a[1] = _mm512_loadu_ps(src + 1 * stride);
+            a[2] = _mm512_loadu_ps(src + 2 * stride);
+            a[3] = _mm512_loadu_ps(src + 3 * stride);
+            a[4] = _mm512_loadu_ps(src + 4 * stride);
+            a[5] = _mm512_loadu_ps(src + 5 * stride);
+            a[6] = _mm512_loadu_ps(src + 6 * stride);
+            a[7] = _mm512_loadu_ps(src + 7 * stride);
+            a[8] = _mm512_loadu_ps(src + 8 * stride);
+            a[9] = _mm512_loadu_ps(src + 9 * stride);
+            a[10] = _mm512_loadu_ps(src + 10 * stride);
+            a[11] = _mm512_loadu_ps(src + 11 * stride);
+            a[12] = _mm512_loadu_ps(src + 12 * stride);
+            a[13] = _mm512_loadu_ps(src + 13 * stride);
+            a[14] = _mm512_setzero_ps();
+            a[15] = _mm512_setzero_ps();
+            for (size_t i = 0; i < 4; ++i)
+            {
+                __m512* c = a + i;
+                b[0] = Interleave<0>(c[0], c[8]);
+                b[1] = Interleave<1>(c[0], c[8]);
+                b[2] = Interleave<0>(c[4], c[12]);
+                b[3] = Interleave<1>(c[4], c[12]);
+                c[0] = Interleave<0>(b[0], b[2]);
+                c[4] = Interleave<1>(b[0], b[2]);
+                c[8] = Interleave<0>(b[1], b[3]);
+                c[12] = Interleave<1>(b[1], b[3]);
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                const __m512 * c = a + i * 4;
+                b[0] = Interleave<0>(c[0], c[2]);
+                b[1] = Interleave<1>(c[0], c[2]);
+                b[2] = Interleave<0>(c[1], c[3]);
+                b[3] = Interleave<1>(c[1], c[3]);
+                _mm512_mask_storeu_ps(dst + 00, 0x3FFF, Interleave<0>(b[0], b[2]));
+                _mm512_mask_storeu_ps(dst + 14, 0x3FFF, Interleave<1>(b[0], b[2]));
+                _mm512_mask_storeu_ps(dst + 28, 0x3FFF, Interleave<0>(b[1], b[3]));
+                _mm512_mask_storeu_ps(dst + 42, 0x3FFF, Interleave<1>(b[1], b[3]));
+                dst += 56;
+            }
+        }
+
+        SIMD_INLINE void GemmPackA_14x4(const float* src, size_t stride, float* dst)
+        {
+            __m128 a[4], b[4];
+            for (size_t j = 0; j < 3; ++j)
+            {
+                a[0] = _mm_loadu_ps(src + 0 * stride);
+                a[1] = _mm_loadu_ps(src + 1 * stride);
+                a[2] = _mm_loadu_ps(src + 2 * stride);
+                a[3] = _mm_loadu_ps(src + 3 * stride);
+                b[0] = _mm_unpacklo_ps(a[0], a[2]);
+                b[1] = _mm_unpackhi_ps(a[0], a[2]);
+                b[2] = _mm_unpacklo_ps(a[1], a[3]);
+                b[3] = _mm_unpackhi_ps(a[1], a[3]);
+                _mm_storeu_ps(dst + 0x00, _mm_unpacklo_ps(b[0], b[2]));
+                _mm_storeu_ps(dst + 0x0E, _mm_unpackhi_ps(b[0], b[2]));
+                _mm_storeu_ps(dst + 0x1C, _mm_unpacklo_ps(b[1], b[3]));
+                _mm_storeu_ps(dst + 0x2A, _mm_unpackhi_ps(b[1], b[3]));
+                src += 4 * stride;
+                dst += 4;
+            }
+            a[0] = _mm_loadu_ps(src + 0 * stride);
+            a[1] = _mm_loadu_ps(src + 1 * stride);
+            b[0] = _mm_unpacklo_ps(a[0], a[1]);
+            b[1] = _mm_unpackhi_ps(a[0], a[1]);
+            _mm_storel_pi((__m64*)(dst + 0x00), b[0]);
+            _mm_storeh_pi((__m64*)(dst + 0x0E), b[0]);
+            _mm_storel_pi((__m64*)(dst + 0x1C), b[1]);
+            _mm_storeh_pi((__m64*)(dst + 0x2A), b[1]);
+        }
+
+        void GemmPackA(const float * src, size_t stride, size_t M, size_t K, size_t cell, float* dst)
+        {
+            size_t K4 = AlignLo(K, 4), K8 = AlignLo(K, 8), K16 =  AlignLo(K, 16);
+            //for (size_t i = 0; i < 16; i++)
+            //    for (size_t j = 0; j < 14; j++)
+            //        ((float*)src)[j * stride + i] = i * 0.010001f + j;
             for (size_t i = 0; i < M; i += cell)
             {
                 size_t m = Simd::Min(cell, M - i), k = 0;
                 if (cell == 4 && m == 4)
                 {
-                    for (; k < K8; k += 8)
-                    {
-                        const float * ps = src + k;
-                        __m256 s0 = _mm256_loadu_ps(ps + 0 * K);
-                        __m256 s1 = _mm256_loadu_ps(ps + 1 * K);
-                        __m256 s2 = _mm256_loadu_ps(ps + 2 * K);
-                        __m256 s3 = _mm256_loadu_ps(ps + 3 * K);
-                        __m256 s00 = _mm256_unpacklo_ps(s0, s2);
-                        __m256 s01 = _mm256_unpacklo_ps(s1, s3);
-                        __m256 s10 = _mm256_unpackhi_ps(s0, s2);
-                        __m256 s11 = _mm256_unpackhi_ps(s1, s3);
-                        __m256 d0 = _mm256_unpacklo_ps(s00, s01);
-                        __m256 d1 = _mm256_unpackhi_ps(s00, s01);
-                        __m256 d2 = _mm256_unpacklo_ps(s10, s11);
-                        __m256 d3 = _mm256_unpackhi_ps(s10, s11);
-                        _mm256_storeu_ps(dst + 0, _mm256_permute2f128_ps(d0, d1, 0x20));
-                        _mm256_storeu_ps(dst + 8, _mm256_permute2f128_ps(d2, d3, 0x20));
-                        _mm256_storeu_ps(dst + 16, _mm256_permute2f128_ps(d0, d1, 0x31));
-                        _mm256_storeu_ps(dst + 24, _mm256_permute2f128_ps(d2, d3, 0x31));
-                        dst += 32;
-                    };
-                    for (; k < K4; k += 4)
-                    {
-                        const float * ps = src + k;
-                        __m128 s0 = _mm_loadu_ps(ps + 0 * stride);
-                        __m128 s1 = _mm_loadu_ps(ps + 1 * stride);
-                        __m128 s2 = _mm_loadu_ps(ps + 2 * stride);
-                        __m128 s3 = _mm_loadu_ps(ps + 3 * stride);
-                        __m128 s00 = _mm_unpacklo_ps(s0, s2);
-                        __m128 s01 = _mm_unpacklo_ps(s1, s3);
-                        __m128 s10 = _mm_unpackhi_ps(s0, s2);
-                        __m128 s11 = _mm_unpackhi_ps(s1, s3);
-                        _mm_storeu_ps(dst + 0, _mm_unpacklo_ps(s00, s01));
-                        _mm_storeu_ps(dst + 4, _mm_unpackhi_ps(s00, s01));
-                        _mm_storeu_ps(dst + 8, _mm_unpacklo_ps(s10, s11));
-                        _mm_storeu_ps(dst + 12, _mm_unpackhi_ps(s10, s11));
-                        dst += 16;
-                    }
+                    for (; k < K16; k += 16, dst += 64)
+                        GemmPackA_4x16(src + k, stride, dst);
+                    for (; k < K8; k += 8, dst += 32)
+                        GemmPackA_4x8(src + k, stride, dst);
+                    for (; k < K4; k += 4, dst += 16)
+                        GemmPackA_4x4(src + k, stride, dst);
+                }
+                else if (cell == 6 && m == 6)
+                {
+                    for (; k < K16; k += 16, dst += 96)
+                        GemmPackA_6x16(src + k, stride, dst);
+                    for (; k < K4; k += 4, dst += 24)
+                        GemmPackA_6x4(src + k, stride, dst);
+                }                
+                else if (cell == 8 && m == 8)
+                {
+                    for (; k < K16; k += 16, dst += 128)
+                        GemmPackA_8x16(src + k, stride, dst);
+                    for (; k < K4; k += 4, dst += 32)
+                        GemmPackA_8x4(src + k, stride, dst);
+                }                
+                else if (cell == 9 && m == 9)
+                {
+                    for (; k < K16; k += 16, dst += 144)
+                        GemmPackA_9x16(src + k, stride, dst);
+                    for (; k < K4; k += 4, dst += 36)
+                        GemmPackA_9x4(src + k, stride, dst);
+                }                
+                else if (cell == 12 && m == 12)
+                {
+                    for (; k < K16; k += 16, dst += 192)
+                        GemmPackA_12x16(src + k, stride, dst);
+                    for (; k < K4; k += 4, dst += 48)
+                        GemmPackA_12x4(src + k, stride, dst);
+                }
+                else if (cell == 14 && m == 14)
+                {
+                    for (; k < K16; k += 16, dst += 224)
+                        GemmPackA_14x16(src + k, stride, dst);
+                    for (; k < K4; k += 4, dst += 56)
+                        GemmPackA_14x4(src + k, stride, dst);
                 }
                 for (; k < K; ++k)
                 {
@@ -1771,32 +2463,42 @@ namespace Simd
             }
         }
 
-        SIMD_INLINE void ScaleC(float * ptr, __m512 value, __mmask16 mask = -1)
+        SIMD_INLINE void ScaleC(float * ptr, __m512 beta, __mmask16 mask = -1)
         {
-            _mm512_mask_storeu_ps(ptr, mask, _mm512_mul_ps(_mm512_maskz_loadu_ps(mask, ptr), value));
+            _mm512_mask_storeu_ps(ptr, mask, _mm512_mul_ps(_mm512_maskz_loadu_ps(mask, ptr), beta));
         }
 
-        void GemmScaleC(size_t M, size_t N, float value, float * C, size_t ldc)
+        void GemmScaleC(size_t M, size_t N, float beta, float * C, size_t ldc)
         {
-            size_t NQF = AlignLo(N, QF);
-            size_t NF = AlignLo(N, F);
-            __m512 _value = _mm512_set1_ps(value);
-            __mmask16 tail = TailMask16(N - NF);
-            for (size_t i = 0; i < M; ++i)
+            if (beta == 1.0f)
+                return;
+            else if (beta == 0.0f)
             {
-                size_t j = 0;
-                for (; j < NQF; j += QF)
+                for (size_t i = 0; i < M; ++i)
+                    memset(C + i * ldc, 0, N * sizeof(float));
+            }
+            else
+            {
+                size_t NQF = AlignLo(N, QF);
+                size_t NF = AlignLo(N, F);
+                __m512 _beta = _mm512_set1_ps(beta);
+                __mmask16 tail = TailMask16(N - NF);
+                for (size_t i = 0; i < M; ++i)
                 {
-                    ScaleC(C + j + F * 0, _value);
-                    ScaleC(C + j + F * 1, _value);
-                    ScaleC(C + j + F * 2, _value);
-                    ScaleC(C + j + F * 3, _value);
+                    size_t j = 0;
+                    for (; j < NQF; j += QF)
+                    {
+                        ScaleC(C + j + F * 0, _beta);
+                        ScaleC(C + j + F * 1, _beta);
+                        ScaleC(C + j + F * 2, _beta);
+                        ScaleC(C + j + F * 3, _beta);
+                    }
+                    for (; j < NF; j += F)
+                        ScaleC(C + j, _beta);
+                    if (j < N)
+                        ScaleC(C + j, _beta, tail);
+                    C += ldc;
                 }
-                for (; j < NF; j += F)
-                    ScaleC(C + j, _value);
-                if (j < N)
-                    ScaleC(C + j, _value, tail);
-                C += ldc;
             }
         }
 
@@ -1901,6 +2603,19 @@ namespace Simd
             Gemm32fNNcb::Tail kernelTM, kernelTT;
             size_t microM, microN;
 #if SIMD_ZMM_COUNT == 32
+            if (type == GemmKernelF4 || (type == GemmKernelAny && (M == 6 || N == 64)))
+            {
+                microN = 64;
+                size_t tail = N - AlignLoAny(N, microN);
+                {
+                    microM = 6;
+                    kernelMM = Avx512f::GemmKernel6x64nn;
+                    kernelMT = tail > 3*F ? Avx512f::GemmKernel6x64nn : (tail > DF ? Avx512f::GemmKernel6x48nn : (tail > F ? Avx512f::GemmKernel6x32nn : Avx512f::GemmKernel6x16nn));
+                    kernelTM = Avx512f::GetGemmTail(M % microM, microN);
+                    kernelTT = Avx512f::GetGemmTail(M % microM, tail);
+                }
+                type = GemmKernelF4;
+            }
             if (type == GemmKernelF3 || (type == GemmKernelAny && (M == 4 || M == 8 || M == 9 || M == 16 || M == 18 || M == 32 || N == 48 || N == 96 || (M < 14 && M != 6 && M != 12)) && N > 32))
             {
                 microN = 48;
@@ -2012,8 +2727,9 @@ namespace Simd
             kernelTM = Avx512f::GetGemmTail(M%microM, microN);
             kernelTT = Avx512f::GetGemmTail(M%microM, microN);
 #endif
-            return Gemm32fNNcb(M, N, K, microM, microN, Base::AlgCacheL1(), Base::AlgCacheL2(), Base::AlgCacheL3(), F, 
-                kernelMM, kernelMT, kernelTM, kernelTT, Avx512f::GemmPackB, Avx512f::GemmScaleC, TailMask16, compatibility);
+            Gemm32fNNcb::PackA packA = ((M * 3 < N && N >= 512 && K >= 128 && M > 16) || (K >= 256 && M > 256)) ? Avx512f::GemmPackA : NULL;
+            return Gemm32fNNcb(M, N, K, microM, microN, Base::AlgCacheL1(), Base::AlgCacheL2(), Base::AlgCacheL3(), F,
+                kernelMM, kernelMT, kernelTM, kernelTT, packA, Avx512f::GemmPackB, Avx512f::GemmScaleC, TailMask16, compatibility);
         }
 
         size_t Gemm32fNNcbBufferSize(size_t M, size_t N, size_t K, GemmKernelType type, bool compatibility)
@@ -2040,6 +2756,7 @@ namespace Simd
 
         void Gemm32fNNcbRun(size_t M, size_t N, size_t K, const float * A, const float * pB, float * C, GemmKernelType type, bool compatibility)
         {
+            //SIMD_PERF_BEGF(Simd::ToStr(M) + "-" + Simd::ToStr(N) + "-" + Simd::ToStr(K), M * N * K * 2);
             if (N > Avx::F)
             {
                 Gemm32fNNcb gemm = CreateGemm32fNNcb(M, N, K, type, compatibility);
@@ -2161,7 +2878,7 @@ namespace Simd
 
         static void Kernel2x4x16nt(size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, float * C, size_t ldc)
         {
-            size_t K16 = K & (~16);
+            size_t K16 = K & (~15);
             const float * A0 = A + 0 * lda;
             const float * A1 = A + 1 * lda;
             const float * B0 = B + 0 * ldb;
@@ -2515,8 +3232,12 @@ namespace Simd
 
         void Gemm32fNT(size_t M, size_t N, size_t K, const float * alpha, const float * A, size_t lda, const float * B, size_t ldb, const float * beta, float * C, size_t ldc)
         {
-            SIMD_PERF_BEGF(Simd::ToStr(M) + "-" + Simd::ToStr(N) + "-" + Simd::ToStr(K), M*N*K * 2);
-
+            //SIMD_PERF_BEGF(Simd::ToStr(M) + "-" + Simd::ToStr(N) + "-" + Simd::ToStr(K), M*N*K * 2);
+            if (K <= Avx2::F)
+            {
+                Avx2::Gemm32fNT(M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+                return;
+            }
             typedef Simd::GemmNT<float> GemmNT;
 #if SIMD_ZMM_COUNT == 32
             GemmNT gemmNT(M, N, K, Base::AlgCacheL1(), Base::AlgCacheL2(), Base::AlgCacheL3(), F, Avx::GemmScaleC,

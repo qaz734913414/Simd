@@ -25,6 +25,7 @@
 #include "Simd/SimdPow.h"
 #include "Simd/SimdSynet.h"
 #include "Simd/SimdEnable.h"
+#include "Simd/SimdExp.h"
 
 namespace Simd
 {
@@ -330,140 +331,6 @@ namespace Simd
 
         //---------------------------------------------------------------------
 
-        void SynetPoolingForwardMax(const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans)
-        {
-            if (trans)
-            {
-                for (size_t ph = 0; ph < dstH; ++ph)
-                {
-                    size_t hStart = ph * strideY - padY;
-                    size_t hEnd = Simd::Min(hStart + kernelY, srcH);
-                    hStart = Simd::Max<ptrdiff_t>(0, hStart);
-                    for (size_t pw = 0; pw < dstW; ++pw)
-                    {
-                        size_t wStart = pw * strideX - padX;
-                        size_t wEnd = Simd::Min(wStart + kernelX, srcW);
-                        wStart = Simd::Max<ptrdiff_t>(0, wStart);
-                        for (size_t c = 0; c < srcC; ++c)
-                            dst[c] = -FLT_MAX;
-                        for (size_t h = hStart; h < hEnd; ++h)
-                        {
-                            for (size_t w = wStart; w < wEnd; ++w)
-                            {
-                                const float * pc = src + (h * srcW + w)*srcC;
-                                for (size_t c = 0; c < srcC; ++c)
-                                    dst[c] = Simd::Max(dst[c], pc[c]);
-                            }
-                        }
-                        dst += srcC;
-                    }
-                }
-            }
-            else
-            {
-                for (size_t c = 0; c < srcC; ++c)
-                {
-                    for (size_t ph = 0; ph < dstH; ++ph)
-                    {
-                        size_t hStart = ph * strideY - padY;
-                        size_t hEnd = Simd::Min(hStart + kernelY, srcH);
-                        hStart = Simd::Max<ptrdiff_t>(0, hStart);
-                        for (size_t pw = 0; pw < dstW; ++pw)
-                        {
-                            size_t wStart = pw * strideX - padX;
-                            size_t wEnd = Simd::Min(wStart + kernelX, srcW);
-                            wStart = Simd::Max<ptrdiff_t>(0, wStart);
-                            float max = -FLT_MAX;
-                            for (size_t h = hStart; h < hEnd; ++h)
-                                for (size_t w = wStart; w < wEnd; ++w)
-                                    max = Simd::Max(max, src[h * srcW + w]);
-                            dst[ph*dstW + pw] = max;
-                        }
-                    }
-                    src += srcW * srcH;
-                    dst += dstW * dstH;
-                }
-            }
-        }
-
-        //---------------------------------------------------------------------
-
-        void SynetPreluLayerForwardNchw(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            size_t aligned = Simd::AlignLo(spatial, 4);
-            for (size_t c = 0; c < channels; ++c)
-            {
-                float _slope = slope[c];
-                size_t s = 0;
-                for (; s < aligned; s += 4)
-                {
-                    dst[s + 0] = SynetPreluLayerForward(src[s + 0], _slope);
-                    dst[s + 1] = SynetPreluLayerForward(src[s + 1], _slope);
-                    dst[s + 2] = SynetPreluLayerForward(src[s + 2], _slope);
-                    dst[s + 3] = SynetPreluLayerForward(src[s + 3], _slope);
-                }
-                for (; s < spatial; ++s)
-                    dst[s] = SynetPreluLayerForward(src[s], _slope);
-                src += spatial;
-                dst += spatial;
-            }
-        }
-
-        void SynetPreluLayerForwardNhwc(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            size_t aligned = Simd::AlignLo(channels, 4);
-            for (size_t s = 0; s < spatial; ++s)
-            {
-                size_t c = 0;
-                for (; c < aligned; c += 4)
-                {
-                    dst[c + 0] = SynetPreluLayerForward(src[c + 0], slope[c + 0]);
-                    dst[c + 1] = SynetPreluLayerForward(src[c + 1], slope[c + 1]);
-                    dst[c + 2] = SynetPreluLayerForward(src[c + 2], slope[c + 2]);
-                    dst[c + 3] = SynetPreluLayerForward(src[c + 3], slope[c + 3]);
-                }
-                for (; c < channels; ++c)
-                    dst[c] = SynetPreluLayerForward(src[c], slope[c]);
-                src += channels;
-                dst += channels;
-
-            }
-        }
-
-        template<int N> void SynetPreluLayerForwardNchwXc(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            for (size_t c = 0; c < channels; c += N)
-            {
-                for (size_t s = 0; s < spatial; ++s)
-                {
-                    for (size_t i = 0; i < N; ++i)
-                        dst[i] = SynetPreluLayerForward(src[i], slope[i]);
-                    src += N;
-                    dst += N;
-                }
-                slope += N;
-            }
-        }
-
-        void SynetPreluLayerForward(const float * src, const float * slope, size_t channels, size_t spatial, float * dst, SimdTensorFormatType format)
-        {
-            if (Base::NchwCompatible(channels, spatial, format))
-                SynetPreluLayerForwardNchw(src, slope, channels, spatial, dst);
-            else if (Base::NhwcCompatible(channels, spatial, format))
-                SynetPreluLayerForwardNhwc(src, slope, channels, spatial, dst);
-            else if (format == SimdTensorFormatNchw4c)
-                SynetPreluLayerForwardNchwXc<4>(src, slope, channels, spatial, dst);
-            else if (format == SimdTensorFormatNchw8c)
-                SynetPreluLayerForwardNchwXc<8>(src, slope, channels, spatial, dst);
-            else if (format == SimdTensorFormatNchw16c)
-                SynetPreluLayerForwardNchwXc<16>(src, slope, channels, spatial, dst);
-            else
-                assert(0);
-        }
-
-        //---------------------------------------------------------------------
-
         void SynetScaleLayerForwardNchw(const float * src, const float * scale, const float * bias, size_t channels, size_t spatial, float * dst)
         {
             size_t aligned = Simd::AlignLo(spatial, 4);
@@ -708,6 +575,40 @@ namespace Simd
                     src += count * inner;
                     dst += count * inner;
                 }
+            }
+        }
+
+        //---------------------------------------------------------------------
+
+        template<SimdSynetUnaryOperation32fType type> void SynetUnaryOperation32fLayerForward(const float* src, size_t size, float* dst)
+        {
+            size_t size4 = AlignLo(size, 4);
+            size_t i = 0;
+            for (; i < size4; i += 4)
+            {
+                dst[i + 0] = SynetUnaryOperation32f<type>(src[i + 0]);
+                dst[i + 1] = SynetUnaryOperation32f<type>(src[i + 1]);
+                dst[i + 2] = SynetUnaryOperation32f<type>(src[i + 2]);
+                dst[i + 3] = SynetUnaryOperation32f<type>(src[i + 3]);
+            }
+            for (; i < size; ++i)
+                dst[i] = SynetUnaryOperation32f<type>(src[i]);
+        }
+
+        void SynetUnaryOperation32fLayerForward(const float * src, size_t size, SimdSynetUnaryOperation32fType type, float * dst)
+        {
+            switch (type)
+            {
+            case SimdSynetUnaryOperation32fAbs: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fAbs>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fExp: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fExp>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fLog: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fLog>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fNeg: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fNeg>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fRsqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fRsqrt>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fSqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fSqrt>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fTanh: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fTanh>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fZero: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fZero>(src, size, dst); break;
+            default:
+                assert(0);
             }
         }
     }

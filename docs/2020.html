@@ -1,0 +1,148 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html" />
+<title>Simd Library Release Notes (2020)</title>
+</head>
+<body> <center><table width=1024><tr><td>
+<a id="HOME"><a>
+<center>
+<img width="200" height="100" src="logo.png">
+<h1>Simd Library Release Notes (2020).</h1>
+<a href="index.html">Home</a> |
+<a href="2020.html">Release Notes</a> | 
+<a href="download.html">Download</a> | 
+<a href="help/index.html">Documentation</a> | 
+<a href="http://github.com/ermig1979/Simd/issues">Issues</a> | 
+<a href="http://github.com/ermig1979/Simd" target="_top">GitHub</a> 
+</center>
+<hr/> 
+</td></tr><tr><td>
+
+<center>
+ <a href="2020.html">2020</a> |
+ <a href="2019.html">2019</a> |
+ <a href="2018.html">2018</a> |
+ <a href="2017.html">2017</a> |
+ <a href="2016.html">2016</a> |
+ <a href="2015.html">2015</a> |
+ <a href="2014.html">2014</a> |
+ <a href="2013.html">2013</a>
+</center>
+
+<hr/>
+
+<h3 id="R086">February X, 2020 (version X.X.86)</h3> 
+
+<h4>Algorithms</h4>
+<h5>New features</h5>
+<ul>
+ <li>SimdResizeMethodInferenceEngineInterp method in Resizer framework.</li>
+</ul>
+<h5>Improving</h5>
+<ul>
+ <li>Performance of Convolution32f framework (NHWC format, kernel=3x3, stride=1x1, large H and W).</li>
+ <li>Performance of AVX-512F and NEON optimizations of function GemmPackA.</li>
+ <li>Performance of Convolution32f framework (NHWC format, GemmNN method).</li>
+ <li>Performance of SSE2, AVX, AVX2, AVX-512F and NEON optimizations of Convolution32f framework (NHWC format, NhwcDirect method, kernel=1x1).</li>
+ <li>Performance of AVX-512F optimization of MergedConvolution32f framework (input convolution).</li>
+ <li>Performance of AVX2 and AVX-512F optimizations of MergedConvolution32f framework (output convolution).</li>
+ <li>Performance of Convolution32f framework (stride > 1).</li>
+ <li>Performance of AVX-512F optimization of Gemm32fNN function (add 6x64 and 6x48 micro kernel).</li>
+</ul>
+<h5>Bug fixing</h5>
+<ul>
+ <li>Error in AVX-512F optimization of function WinogradKernel3x3Block2x2SetOutput (NCHW format).</li>
+ <li>Error in SSE, AVX, AVX-512F and NEON optimizations of function SynetPoolingForwardAverage (NHWC format).</li>
+ <li>Error in AVX-512F optimization of function SynetInnerProductLayerForward.</li>
+ <li>Error in AVX, AVX2 and AVX-512F optimizations of function Gemm32fNT.</li>
+ <li>Error in function WinogradKernel3x3Block4x4SetInput (padX != padY != padW != padH).</li>
+ <li>Error in debug FLOPS annotation of Deconvolution32f framework.</li>
+ <li>MergedConvolution32f framework doesn't work with stride == 3.</li>
+</ul>
+
+<a href="#HOME">Home</a> 
+<hr/> 
+<h3 id="R085">January 3, 2020 (version 4.5.85)</h3> 
+
+<h4>Algorithms</h4>
+<h5>New features</h5>
+<ul>
+ <li>Base implementation, SSE2, AVX2, AVX-512F and NEON optimizations of function SynetUnaryOperation32fLayerForward.</li>
+ <li>Base implementation, SSE2, AVX2, AVX-512F and NEON optimizations of function SynetSoftplus32f.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel2x2Block2x2SetFilter.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel2x2Block2x2SetInput.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel2x2Block2x2SetOutput.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel2x2Block4x4SetFilter.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel2x2Block4x4SetInput.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel2x2Block4x4SetOutput.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel1x3Block1x4SetFilter.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel1x3Block1x4SetInput.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel1x3Block1x4SetOutput.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel1x5Block1x4SetFilter.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel1x5Block1x4SetInput.</li>
+ <li>Base implementation, SSE, AVX, AVX-512F and NEON optimizations of function WinogradKernel1x5Block1x4SetOutput.</li>
+</ul>
+<h5>Improving</h5>
+<ul>
+ <li>Performance of Convolution32f framework (NHWC format, kernel=1x1x1).</li>
+ <li>Performance of Convolution32f framework (NHWC format, kernel=2x2).</li>
+ <li>Performance of Convolution32f framework (NHWC format, kernel=1x3).</li>
+ <li>Performance of Convolution32f framework (NHWC format, kernel=1x5).</li>
+</ul>
+<h5>Renaming</h5>
+<ul>
+ <li>NeuralSigmoid to SynetSigmoid32f.</li>
+ <li>NeuralTanh to SynetTanh32f.</li>
+ <li>NeuralRelu to SynetRelu32f.</li>
+ <li>Winograd2x3SetFilter to WinogradKernel3x3Block2x2SetFilter.</li>
+ <li>Winograd2x3SetInput to WinogradKernel3x3Block2x2SetInput.</li>
+ <li>Winograd2x3SetOutput to WinogradKernel3x3Block2x2SetOutput.</li>
+ <li>Winograd3x3SetFilter to WinogradKernel3x3Block3x3SetFilter.</li>
+ <li>Winograd3x3SetInput to WinogradKernel3x3Block3x3SetInput.</li>
+ <li>Winograd3x3SetOutput to WinogradKernel3x3Block3x3SetOutput.</li>
+ <li>Winograd4x4SetFilter to WinogradKernel3x3Block4x4SetFilter.</li>
+ <li>Winograd4x4SetInput to WinogradKernel3x3Block4x4SetInput.</li>
+ <li>Winograd4x4SetOutput to WinogradKernel3x3Block4x4SetOutput.</li>
+</ul>
+<h5>Bug fixing</h5>
+<ul>
+ <li>Error in Convolution32f framework (kernel greater than input size, NHWC format).</li>
+ <li>Potential crash in ContourDetector.</li>
+</ul>
+
+<h4>Test framework</h4>
+<h5>New features</h5>
+<ul>
+ <li>Tests for verifying functionality of function SynetUnaryOperation32fLayerForward.</li>
+ <li>Tests for verifying functionality of function SynetSoftplus32f.</li>
+ <li>Tests for verifying functionality of function WinogradKernel2x2Block2x2SetFilter.</li>
+ <li>Tests for verifying functionality of function WinogradKernel2x2Block2x2SetInput.</li>
+ <li>Tests for verifying functionality of function WinogradKernel2x2Block2x2SetOutput.</li>
+ <li>Tests for verifying functionality of function WinogradKernel2x2Block4x4SetFilter.</li>
+ <li>Tests for verifying functionality of function WinogradKernel2x2Block4x4SetInput.</li>
+ <li>Tests for verifying functionality of function WinogradKernel2x2Block4x4SetOutput.</li>
+ <li>Tests for verifying functionality of function WinogradKernel1x3Block1x4SetFilter.</li>
+ <li>Tests for verifying functionality of function WinogradKernel1x3Block1x4SetInput.</li>
+ <li>Tests for verifying functionality of function WinogradKernel1x3Block1x4SetOutput.</li>
+ <li>Tests for verifying functionality of function WinogradKernel1x5Block1x4SetFilter.</li>
+ <li>Tests for verifying functionality of function WinogradKernel1x5Block1x4SetInput.</li>
+ <li>Tests for verifying functionality of function WinogradKernel1x5Block1x4SetOutput.</li>
+</ul>
+
+<a href="#HOME">Home</a> 
+<hr/> 
+
+<center>
+ <a href="2020.html">2020</a> |
+ <a href="2019.html">2019</a> |
+ <a href="2018.html">2018</a> |
+ <a href="2017.html">2017</a> |
+ <a href="2016.html">2016</a> | 
+ <a href="2015.html">2015</a> |
+ <a href="2014.html">2014</a> |
+ <a href="2013.html">2013</a>
+</center>
+
+<hr/> 
+
+</td> </tr> </table> </center> </body> </html>

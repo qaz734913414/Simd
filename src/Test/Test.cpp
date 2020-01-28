@@ -251,14 +251,11 @@ namespace Test
     TEST_ADD_GROUP_AD0(NeuralAddVectorMultipliedByValue);
     TEST_ADD_GROUP_AD0(NeuralAddVector);
     TEST_ADD_GROUP_AD0(NeuralAddValue);
-    TEST_ADD_GROUP_AD0(NeuralSigmoid);
     TEST_ADD_GROUP_AD0(NeuralRoughSigmoid);
     TEST_ADD_GROUP_AD0(NeuralRoughSigmoid2);
     TEST_ADD_GROUP_AD0(NeuralDerivativeSigmoid);
-    TEST_ADD_GROUP_AD0(NeuralTanh);
     TEST_ADD_GROUP_AD0(NeuralRoughTanh);
     TEST_ADD_GROUP_AD0(NeuralDerivativeTanh);
-    TEST_ADD_GROUP_AD0(NeuralRelu);
     TEST_ADD_GROUP_AD0(NeuralDerivativeRelu);
     TEST_ADD_GROUP_AD0(NeuralPow);
     TEST_ADD_GROUP_AD0(NeuralUpdateWeights);
@@ -331,15 +328,19 @@ namespace Test
     TEST_ADD_GROUP_AD0(SynetEltwiseLayerForward);
     TEST_ADD_GROUP_A00(SynetInnerProductLayerForward);
     TEST_ADD_GROUP_A00(SynetLrnLayerCrossChannels);
-    TEST_ADD_GROUP_A00(SynetPoolingForwardMax);
-    TEST_ADD_GROUP_A00(SynetPreluLayerForward);
     TEST_ADD_GROUP_A00(SynetScaleLayerForward);
     TEST_ADD_GROUP_A00(SynetShuffleLayerForward);
     TEST_ADD_GROUP_A00(SynetSoftmaxLayerForward);
+    TEST_ADD_GROUP_A00(SynetUnaryOperation32fLayerForward);
 
     TEST_ADD_GROUP_A00(SynetElu32f);
     TEST_ADD_GROUP_A00(SynetHswish32f);
+    TEST_ADD_GROUP_A00(SynetPreluLayerForward);
+    TEST_ADD_GROUP_A00(SynetRelu32f);
     TEST_ADD_GROUP_A00(SynetRestrictRange32f);
+    TEST_ADD_GROUP_A00(SynetSigmoid32f);
+    TEST_ADD_GROUP_A00(SynetSoftplus32f);
+    TEST_ADD_GROUP_A00(SynetTanh32f);
 
     TEST_ADD_GROUP_A00(SynetConvertImage);
     TEST_ADD_GROUP_A00(SynetConvertFilter);
@@ -359,6 +360,9 @@ namespace Test
 
     TEST_ADD_GROUP_A00(SynetMergedConvolution32fForward);
 
+    TEST_ADD_GROUP_A00(SynetPoolingForwardAverage);
+    TEST_ADD_GROUP_A00(SynetPoolingForwardMax);
+
     TEST_ADD_GROUP_AD0(TextureBoostedSaturatedGradient);
     TEST_ADD_GROUP_AD0(TextureBoostedUv);
     TEST_ADD_GROUP_AD0(TextureGetDifferenceSum);
@@ -366,19 +370,35 @@ namespace Test
 
     TEST_ADD_GROUP_A00(TransformImage);
 
-    TEST_ADD_GROUP_A00(Winograd2x3SetFilter);
-    TEST_ADD_GROUP_A00(Winograd2x3SetInput);
-    TEST_ADD_GROUP_A00(Winograd2x3SetOutput);
-    TEST_ADD_GROUP_A00(Winograd3x3SetFilter);
-    TEST_ADD_GROUP_A00(Winograd3x3SetInput);
-    TEST_ADD_GROUP_A00(Winograd3x3SetOutput);
-    TEST_ADD_GROUP_A00(Winograd4x3SetFilter);
-    TEST_ADD_GROUP_A00(Winograd4x3SetInput);
-    TEST_ADD_GROUP_A00(Winograd4x3SetOutput);
+    TEST_ADD_GROUP_A00(WinogradKernel1x3Block1x4SetFilter);
+    TEST_ADD_GROUP_A00(WinogradKernel1x3Block1x4SetInput);
+    TEST_ADD_GROUP_A00(WinogradKernel1x3Block1x4SetOutput);
+    TEST_ADD_GROUP_A00(WinogradKernel1x5Block1x4SetFilter);
+    TEST_ADD_GROUP_A00(WinogradKernel1x5Block1x4SetInput);
+    TEST_ADD_GROUP_A00(WinogradKernel1x5Block1x4SetOutput);
+    TEST_ADD_GROUP_A00(WinogradKernel2x2Block2x2SetFilter);
+    TEST_ADD_GROUP_A00(WinogradKernel2x2Block2x2SetInput);
+    TEST_ADD_GROUP_A00(WinogradKernel2x2Block2x2SetOutput);
+    TEST_ADD_GROUP_A00(WinogradKernel2x2Block4x4SetFilter);
+    TEST_ADD_GROUP_A00(WinogradKernel2x2Block4x4SetInput);
+    TEST_ADD_GROUP_A00(WinogradKernel2x2Block4x4SetOutput);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block2x2SetFilter);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block2x2SetInput);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block2x2SetOutput);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block3x3SetFilter);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block3x3SetInput);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block3x3SetOutput);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block4x4SetFilter);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block4x4SetInput);
+    TEST_ADD_GROUP_A00(WinogradKernel3x3Block4x4SetOutput);
 
-    TEST_ADD_GROUP_00S(Winograd2x3);
-    TEST_ADD_GROUP_00S(Winograd3x3);
-    TEST_ADD_GROUP_00S(Winograd4x3);
+    TEST_ADD_GROUP_00S(WinogradKernel1x3Block1x4);
+    TEST_ADD_GROUP_00S(WinogradKernel1x5Block1x4);
+    TEST_ADD_GROUP_00S(WinogradKernel2x2Block2x2);
+    TEST_ADD_GROUP_00S(WinogradKernel2x2Block4x4);
+    TEST_ADD_GROUP_00S(WinogradKernel3x3Block2x2);
+    TEST_ADD_GROUP_00S(WinogradKernel3x3Block3x3);
+    TEST_ADD_GROUP_00S(WinogradKernel3x3Block4x4);
 
     TEST_ADD_GROUP_AD0(Yuv444pToBgr);
     TEST_ADD_GROUP_AD0(Yuv422pToBgr);
@@ -544,6 +564,10 @@ namespace Test
                 {
                     workThreads = FromString<size_t>(arg.substr(4, arg.size() - 4));
                 }
+                else if (arg.find("-mt=") == 0)
+                {
+                    MINIMAL_TEST_EXECUTION_TIME = FromString<int>(arg.substr(4, arg.size() - 4))*0.001;
+                }
                 else
                 {
                     TEST_LOG_SS(Error, "Unknown command line options: '" << arg << "'!" << std::endl);
@@ -696,6 +720,7 @@ namespace Test
         std::cout << "    -s=sample.avi a video source (Simd::Motion test)." << std::endl << std::endl;
         std::cout << "    -wt=1         a thread number used to parallelize algorithms." << std::endl << std::endl;
         std::cout << "    -fe=Abs       an exclude filter to exclude some tests." << std::endl << std::endl;
+        std::cout << "    -mt=100       a minimal test execution time (in milliseconds)." << std::endl << std::endl;
         return 0;
     }
 
@@ -709,6 +734,7 @@ namespace Test
     int W = 128;
     int H = 96;
 #endif
+    double MINIMAL_TEST_EXECUTION_TIME = 0.1;
 
     void CheckCpp();
 }

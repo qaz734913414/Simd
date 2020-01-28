@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2018 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *               2016-2016 Sintegrial Technologies.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,6 +34,11 @@
 
 namespace Simd
 {
+    SIMD_INLINE size_t DivHi(size_t value, size_t divider)
+    {
+        return (value + divider - 1) / divider;
+    }
+
     SIMD_INLINE size_t AlignHiAny(size_t size, size_t align)
     {
         return (size + align - 1) / align * align;

@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ namespace Simd
                 int block = 0;
                 _ixg[0].src = 0;
                 _ixg[0].dst = 0;
-                for (int dstIndex = 0; dstIndex < _param.dstW; ++dstIndex)
+                for (int dstIndex = 0; dstIndex < (int)_param.dstW; ++dstIndex)
                 {
                     float alpha = (float)((dstIndex + 0.5)*scale - 0.5);
                     int srcIndex = (int)::floor(alpha);
@@ -64,7 +64,7 @@ namespace Simd
                         alpha = 0;
                     }
 
-                    if (srcIndex > _param.srcW - 2)
+                    if (srcIndex > (int)_param.srcW - 2)
                     {
                         srcIndex = (int)_param.srcW - 2;
                         alpha = 1;
@@ -641,11 +641,11 @@ namespace Simd
         void * ResizerInit(size_t srcX, size_t srcY, size_t dstX, size_t dstY, size_t channels, SimdResizeChannelType type, SimdResizeMethodType method)
         {
             ResParam param(srcX, srcY, dstX, dstY, channels, type, method, sizeof(__m256i));
-            if (type == SimdResizeChannelByte && method == SimdResizeMethodBilinear && dstX >= A)
+            if (param.IsByteBilinear() && dstX >= A)
                 return new ResizerByteBilinear(param);
-            else if (type == SimdResizeChannelByte && method == SimdResizeMethodArea)
+            else if (param.IsByteArea())
                 return new ResizerByteArea(param);
-            else if (type == SimdResizeChannelFloat && (method == SimdResizeMethodBilinear || method == SimdResizeMethodCaffeInterp))
+            else if (param.IsFloatBilinear())
                 return new ResizerFloatBilinear(param);
             else
                 return Avx::ResizerInit(srcX, srcY, dstX, dstY, channels, type, method);

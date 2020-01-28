@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -411,13 +411,13 @@ namespace Simd
                 SynetInnerProductLayerForward<false>(src, weight, bias, count, size, dst);
         }
 
+        //---------------------------------------------------------------------
+
         template<int shift> SIMD_INLINE float32x4_t LoadAtEdge(const float * src)
         {
             static const int32_t mask[3 * F] = { 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0 };
             return And(Load<false>(src + shift), Load<false>((float*)mask + F + shift));
         }
-
-        //---------------------------------------------------------------------
 
         SIMD_INLINE float32x4_t NoseSquareSum(const float * src)
         {
@@ -548,297 +548,6 @@ namespace Simd
                 SynetLrnLayerCrossChannelsNhwc(src, half, channels, spatial, k, dst);
             else
                 Base::SynetLrnLayerCrossChannels(src, half, channels, spatial, k, dst, format);
-        }
-
-        //---------------------------------------------------------------------
-
-        SIMD_INLINE void PoolingMaxHwc1(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const float32x4_t & min, float * dst)
-        {
-            float32x4_t max0 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = vmaxq_f32(max0, Load<false>(src + w * srcC + 0 * F));
-                }
-                src += srcS;
-            }
-            Store<false>(dst + 0 * F, max0);
-        }
-
-        SIMD_INLINE void PoolingMaxHwc2(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const float32x4_t & min, float * dst)
-        {
-            float32x4_t max0 = min;
-            float32x4_t max1 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = vmaxq_f32(max0, Load<false>(src + w * srcC + 0 * F));
-                    max1 = vmaxq_f32(max1, Load<false>(src + w * srcC + 1 * F));
-                }
-                src += srcS;
-            }
-            Store<false>(dst + 0 * F, max0);
-            Store<false>(dst + 1 * F, max1);
-        }
-
-        SIMD_INLINE void PoolingMaxHwc4(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const float32x4_t & min, float * dst)
-        {
-            float32x4_t max0 = min;
-            float32x4_t max1 = min;
-            float32x4_t max2 = min;
-            float32x4_t max3 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = vmaxq_f32(max0, Load<false>(src + w * srcC + 0 * F));
-                    max1 = vmaxq_f32(max1, Load<false>(src + w * srcC + 1 * F));
-                    max2 = vmaxq_f32(max2, Load<false>(src + w * srcC + 2 * F));
-                    max3 = vmaxq_f32(max3, Load<false>(src + w * srcC + 3 * F));
-                }
-                src += srcS;
-            }
-            Store<false>(dst + 0 * F, max0);
-            Store<false>(dst + 1 * F, max1);
-            Store<false>(dst + 2 * F, max2);
-            Store<false>(dst + 3 * F, max3);
-        }
-
-        SIMD_INLINE void PoolingMaxHwc8(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const float32x4_t & min, float * dst)
-        {
-            float32x4_t max0 = min;
-            float32x4_t max1 = min;
-            float32x4_t max2 = min;
-            float32x4_t max3 = min;
-            float32x4_t max4 = min;
-            float32x4_t max5 = min;
-            float32x4_t max6 = min;
-            float32x4_t max7 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = vmaxq_f32(max0, Load<false>(src + w * srcC + 0 * F));
-                    max1 = vmaxq_f32(max1, Load<false>(src + w * srcC + 1 * F));
-                    max2 = vmaxq_f32(max2, Load<false>(src + w * srcC + 2 * F));
-                    max3 = vmaxq_f32(max3, Load<false>(src + w * srcC + 3 * F));
-                    max4 = vmaxq_f32(max4, Load<false>(src + w * srcC + 4 * F));
-                    max5 = vmaxq_f32(max5, Load<false>(src + w * srcC + 5 * F));
-                    max6 = vmaxq_f32(max6, Load<false>(src + w * srcC + 6 * F));
-                    max7 = vmaxq_f32(max7, Load<false>(src + w * srcC + 7 * F));
-                }
-                src += srcS;
-            }
-            Store<false>(dst + 0 * F, max0);
-            Store<false>(dst + 1 * F, max1);
-            Store<false>(dst + 2 * F, max2);
-            Store<false>(dst + 3 * F, max3);
-            Store<false>(dst + 4 * F, max4);
-            Store<false>(dst + 5 * F, max5);
-            Store<false>(dst + 6 * F, max6);
-            Store<false>(dst + 7 * F, max7);
-        }
-
-        void SynetPoolingForwardMax(const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans)
-        {
-            if (trans)
-            {
-                if (srcC >= F)
-                {
-                    size_t srcS = srcW * srcC;
-                    size_t srcCF1 = AlignLo(srcC, 1 * F);
-                    size_t srcCF2 = AlignLo(srcC, 2 * F);
-                    size_t srcCF4 = AlignLo(srcC, 4 * F);
-                    size_t srcCF8 = AlignLo(srcC, 8 * F);
-                    float32x4_t min = vdupq_n_f32(-FLT_MAX);
-                    for (size_t ph = 0; ph < dstH; ++ph)
-                    {
-                        size_t hStart = ph * strideY - padY;
-                        size_t hEnd = Simd::Min(hStart + kernelY, srcH);
-                        hStart = Simd::Max<ptrdiff_t>(0, hStart);
-                        for (size_t pw = 0; pw < dstW; ++pw)
-                        {
-                            size_t wStart = pw * strideX - padX;
-                            size_t wEnd = Simd::Min(wStart + kernelX, srcW);
-                            wStart = Simd::Max<ptrdiff_t>(0, wStart);
-                            const float * ps = src + hStart * srcS + wStart * srcC;
-                            size_t c = 0;
-                            for (; c < srcCF8; c += 8 * F)
-                                PoolingMaxHwc8(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                            for (; c < srcCF4; c += 4 * F)
-                                PoolingMaxHwc4(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                            for (; c < srcCF2; c += 2 * F)
-                                PoolingMaxHwc2(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                            for (; c < srcCF1; c += 1 * F)
-                                PoolingMaxHwc1(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                            if (c < srcC)
-                                PoolingMaxHwc1(ps + srcC - F, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + srcC - F);
-                            dst += srcC;
-                        }
-                    }
-                    return;
-                }
-            }
-            else
-            {
-                if (strideY == 1 && strideX == 1 && kernelY == 3 && kernelX == 3 && srcH == dstH && srcW == dstW && dstW > F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Neon::NeuralPooling1x1Max3x3(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-                if (strideY == 2 && strideX == 2 && kernelY == 2 && kernelX == 2 && padY == 0 && padX == 0 && dstW >= F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Neon::NeuralPooling2x2Max2x2(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-                if (strideY == 2 && strideX == 2 && kernelY == 3 && kernelX == 3 && padY == 0 && padX == 0 && dstW > F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Neon::NeuralPooling2x2Max3x3(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-            }
-            Base::SynetPoolingForwardMax(src, srcC, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, trans);
-        }
-
-        //---------------------------------------------------------------------
-
-        template <bool align> SIMD_INLINE void SynetPreluLayerForward(const float * src, const float * slope, float32x4_t _0, float * dst, size_t offset)
-        {
-            Store<align>(dst + offset, SynetPreluLayerForward(Load<align>(src + offset), Load<align>(slope + offset), _0));
-        }
-
-        template <bool align> SIMD_INLINE void SynetPreluLayerForward(const float * src, float32x4_t slope, float32x4_t _0, float * dst, size_t offset)
-        {
-            Store<align>(dst + offset, SynetPreluLayerForward(Load<align>(src + offset), slope, _0));
-        }
-
-        template <bool align> void SynetPreluLayerForwardNchw(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (align)
-                assert(Aligned(src) && Aligned(spatial, F) && Aligned(dst));
-
-            size_t aligned = AlignLo(spatial, QF);
-            size_t partial = AlignLo(spatial, F);
-            float32x4_t _0 = vdupq_n_f32(0.0f);
-            for (size_t c = 0; c < channels; ++c)
-            {
-                size_t s = 0;
-                if (partial)
-                {
-                    float32x4_t _slope = vdupq_n_f32(slope[c]);
-                    for (; s < aligned; s += QF)
-                    {
-                        SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 0);
-                        SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 1);
-                        SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 2);
-                        SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 3);
-                    }
-                    for (; s < partial; s += F)
-                        SynetPreluLayerForward<align>(src, _slope, _0, dst, s);
-                }
-                for (; s < spatial; ++s)
-                    dst[s] = Base::SynetPreluLayerForward(src[s], slope[c]);
-                src += spatial;
-                dst += spatial;
-            }
-        }
-
-        SIMD_INLINE void SynetPreluLayerForwardNchw(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (Aligned(src) && Aligned(spatial, F) && Aligned(dst))
-                SynetPreluLayerForwardNchw<true>(src, slope, channels, spatial, dst);
-            else
-                SynetPreluLayerForwardNchw<false>(src, slope, channels, spatial, dst);
-        }
-
-        template <bool align> void SynetPreluLayerForwardNhwc(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (align)
-                assert(Aligned(src) && Aligned(slope) && Aligned(channels, F) && Aligned(dst));
-
-            size_t aligned = AlignLo(channels, QF);
-            size_t partial = AlignLo(channels, F);
-            float32x4_t _0 = vdupq_n_f32(0.0f);
-            for (size_t s = 0; s < spatial; ++s)
-            {
-                size_t c = 0;
-                if (partial)
-                {
-                    for (; c < aligned; c += QF)
-                    {
-                        SynetPreluLayerForward<align>(src, slope, _0, dst, c + F * 0);
-                        SynetPreluLayerForward<align>(src, slope, _0, dst, c + F * 1);
-                        SynetPreluLayerForward<align>(src, slope, _0, dst, c + F * 2);
-                        SynetPreluLayerForward<align>(src, slope, _0, dst, c + F * 3);
-                    }
-                    for (; c < partial; c += F)
-                        SynetPreluLayerForward<align>(src, slope, _0, dst, c);
-                }
-                for (; c < channels; ++c)
-                    dst[c] = Base::SynetPreluLayerForward(src[c], slope[c]);
-                src += channels;
-                dst += channels;
-            }
-        }
-
-        SIMD_INLINE void SynetPreluLayerForwardNhwc(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (Aligned(src) && Aligned(slope) && Aligned(channels, F) && Aligned(dst))
-                SynetPreluLayerForwardNhwc<true>(src, slope, channels, spatial, dst);
-            else
-                SynetPreluLayerForwardNhwc<false>(src, slope, channels, spatial, dst);
-        }
-
-        template <bool align> void SynetPreluLayerForwardNchw4c(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (align)
-                assert(Aligned(src) && Aligned(dst));
-
-            size_t spatialF = spatial * F;
-            size_t spatial4F = AlignLo(spatial, 4)*F;
-            float32x4_t _0 = vdupq_n_f32(0.0f);
-            for (size_t c = 0; c < channels; c += F)
-            {
-                float32x4_t _slope = Load<false>(slope + c);
-                size_t s = 0;
-                for (; s < spatial4F; s += 4 * F)
-                {
-                    SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 0);
-                    SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 1);
-                    SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 2);
-                    SynetPreluLayerForward<align>(src, _slope, _0, dst, s + F * 3);
-                }
-                for (; s < spatialF; s += F)
-                    SynetPreluLayerForward<align>(src, _slope, _0, dst, s);
-                src += spatialF;
-                dst += spatialF;
-            }
-        }
-
-        SIMD_INLINE void SynetPreluLayerForwardNchw4c(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (Aligned(src) && Aligned(dst))
-                SynetPreluLayerForwardNchw4c<true>(src, slope, channels, spatial, dst);
-            else
-                SynetPreluLayerForwardNchw4c<false>(src, slope, channels, spatial, dst);
-        }
-
-        void SynetPreluLayerForward(const float * src, const float * slope, size_t channels, size_t spatial, float * dst, SimdTensorFormatType format)
-        {
-            if (Base::NchwCompatible(channels, spatial, format))
-                SynetPreluLayerForwardNchw(src, slope, channels, spatial, dst);
-            else if (Base::NhwcCompatible(channels, spatial, format))
-                SynetPreluLayerForwardNhwc(src, slope, channels, spatial, dst);
-            else if (format == SimdTensorFormatNchw4c)
-                SynetPreluLayerForwardNchw4c(src, slope, channels, spatial, dst);
-            else
-                Base::SynetPreluLayerForward(src, slope, channels, spatial, dst, format);
         }
 
         //---------------------------------------------------------------------
@@ -1269,6 +978,93 @@ namespace Simd
                     dst += count * inner;
                 }
             }
+        }
+
+        //---------------------------------------------------------------------
+
+        template<SimdSynetUnaryOperation32fType type> float32x4_t SynetUnaryOperation32f(float32x4_t value);
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fAbs>(float32x4_t value)
+        {
+            return vabsq_f32(value);
+        }
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fExp>(float32x4_t value)
+        {
+            return Exponent(value);
+        }
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fLog>(float32x4_t value)
+        {
+            return Logarithm(value);
+        }
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fNeg>(float32x4_t value)
+        {
+            return vnegq_f32(value);
+        }
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fRsqrt>(float32x4_t value)
+        {
+            return ReciprocalSqrt<1>(value);
+        }
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fSqrt>(float32x4_t value)
+        {
+            return Sqrt<1>(value);
+        }
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fTanh>(float32x4_t value)
+        {
+            return Tanh<1>(value);
+        }
+
+        template<> SIMD_INLINE float32x4_t SynetUnaryOperation32f<SimdSynetUnaryOperation32fZero>(float32x4_t value)
+        {
+            return vdupq_n_f32(0.0f);
+        }
+
+        template<SimdSynetUnaryOperation32fType type, bool align> void SynetUnaryOperation32fLayerForward(const float* src, size_t size, float* dst)
+        {
+            size_t sizeF = AlignLo(size, F);
+            size_t sizeQF = AlignLo(size, QF);
+            size_t i = 0;
+            for (; i < sizeQF; i += QF)
+            {
+                Neon::Store<align>(dst + i + 0 * F, SynetUnaryOperation32f<type>(Neon::Load<align>(src + i + 0 * F)));
+                Neon::Store<align>(dst + i + 1 * F, SynetUnaryOperation32f<type>(Neon::Load<align>(src + i + 1 * F)));
+                Neon::Store<align>(dst + i + 2 * F, SynetUnaryOperation32f<type>(Neon::Load<align>(src + i + 2 * F)));
+                Neon::Store<align>(dst + i + 3 * F, SynetUnaryOperation32f<type>(Neon::Load<align>(src + i + 3 * F)));
+            }
+            for (; i < sizeF; i += F)
+                Neon::Store<align>(dst + i, SynetUnaryOperation32f<type>(Neon::Load<align>(src + i)));
+            for (; i < size; ++i)
+                dst[i] = Base::SynetUnaryOperation32f<type>(src[i]);
+        }
+
+        template<bool align> void SynetUnaryOperation32fLayerForward(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst)
+        {
+            switch (type)
+            {
+            case SimdSynetUnaryOperation32fAbs: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fAbs, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fExp: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fExp, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fLog: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fLog, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fNeg: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fNeg, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fRsqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fRsqrt, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fSqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fSqrt, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fTanh: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fTanh, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fZero: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fZero, align>(src, size, dst); break;
+            default:
+                assert(0);
+            }
+        }
+
+        void SynetUnaryOperation32fLayerForward(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst)
+        {
+            if (Aligned(src) && Aligned(dst))
+                SynetUnaryOperation32fLayerForward<true>(src, size, type, dst);
+            else
+                SynetUnaryOperation32fLayerForward<false>(src, size, type, dst);
         }
     }
 #endif// SIMD_NEON_ENABLE

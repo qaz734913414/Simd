@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -333,7 +333,7 @@
 
 #if (defined(SIMD_AVX512F_ENABLE) || defined(SIMD_AVX512F_ENABLE))
 #ifdef SIMD_X64_ENABLE
-#ifndef _MSC_VER
+#if defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1915)
 #define SIMD_ZMM_COUNT 32
 #else
 #define SIMD_ZMM_COUNT 16

@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -667,8 +667,9 @@ namespace Simd
             kernelTM = Avx2::GetGemmTail(M%microM, microN);
             kernelTT = Avx2::GetGemmTail(M%microM, microN);
 #endif
+            Gemm32fNNcb::PackA packA = (K >= 256 && M > 256) ? Avx::GemmPackA : NULL;
             return Gemm32fNNcb(M, N, K, microM, microN, Base::AlgCacheL1(), Base::AlgCacheL2(), Base::AlgCacheL3(), 
-                F, kernelMM, kernelMT, kernelTM, kernelTT, Avx::GemmPackB, Avx::GemmScaleC, NULL, compatibility);
+                F, kernelMM, kernelMT, kernelTM, kernelTT, packA, Avx::GemmPackB, Avx::GemmScaleC, NULL, compatibility);
         }
 
         size_t Gemm32fNNcbBufferSize(size_t M, size_t N, size_t K, GemmKernelType type, bool compatibility)
@@ -804,7 +805,7 @@ namespace Simd
 
         static void Kernel2x4x8nt(size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, float * C, size_t ldc)
         {
-            size_t K8 = K & (~8);
+            size_t K8 = K & (~7);
             const float * A0 = A + 0 * lda;
             const float * A1 = A + 1 * lda;
             const float * B0 = B + 0 * ldb;
@@ -976,7 +977,7 @@ namespace Simd
 
         void Gemm32fNT(size_t M, size_t N, size_t K, const float * alpha, const float * A, size_t lda, const float * B, size_t ldb, const float * beta, float * C, size_t ldc)
         {
-            SIMD_PERF_BEGF(Simd::ToStr(M) + "-" + Simd::ToStr(N) + "-" + Simd::ToStr(K), M*N*K * 2);
+            //SIMD_PERF_BEGF(Simd::ToStr(M) + "-" + Simd::ToStr(N) + "-" + Simd::ToStr(K), M*N*K * 2);
 
             typedef Simd::GemmNT<float> GemmNT;
 #ifdef SIMD_X64_ENABLE

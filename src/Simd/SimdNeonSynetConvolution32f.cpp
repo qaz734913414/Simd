@@ -83,7 +83,7 @@ namespace Simd
                 else
                 {
                     float slope = 0;
-                    Neon::NeuralRelu(dst, size*count, &slope, dst);
+                    Neon::SynetRelu32f(dst, size*count, &slope, dst);
                 }
             }
             else if (activation == ::SimdConvolutionActivationLeakyRelu)
@@ -101,10 +101,10 @@ namespace Simd
                             for (; i < aligned; i += F)
                             {
                                 float32x4_t value = vaddq_f32(Load<false>(dst + i), Load<false>(bias + i));
-                                Store<false>(dst + i, SynetPreluLayerForward(value, _slope, _0));
+                                Store<false>(dst + i, SynetRelu32f(value, _slope, _0));
                             }
                             for (; i < count; ++i)
-                                dst[i] = Base::SynetPreluLayerForward(dst[i] + bias[i], slope);
+                                dst[i] = Base::SynetRelu32f(dst[i] + bias[i], slope);
                             dst += count;
                         }
                     }
@@ -117,16 +117,16 @@ namespace Simd
                             for (; j < aligned; j += F)
                             {
                                 float32x4_t value = vaddq_f32(Load<false>(dst + j), _bias);
-                                Store<false>(dst + j, SynetPreluLayerForward(value, _slope, _0));
+                                Store<false>(dst + j, SynetRelu32f(value, _slope, _0));
                             }
                             for (; j < size; ++j)
-                                dst[j] = Base::SynetPreluLayerForward(dst[j] + bias[i], slope);
+                                dst[j] = Base::SynetRelu32f(dst[j] + bias[i], slope);
                             dst += size;
                         }
                     }
                 }
                 else
-                    Neon::NeuralRelu(dst, size*count, &slope, dst);
+                    Neon::SynetRelu32f(dst, size*count, &slope, dst);
             }
             else if (activation == ::SimdConvolutionActivationRestrictRange)
             {
@@ -184,10 +184,10 @@ namespace Simd
                             for (; i < aligned; i += F)
                             {
                                 float32x4_t value = vaddq_f32(Load<false>(dst + i), Load<false>(bias + i));
-                                Store<false>(dst + i, SynetPreluLayerForward(value, Load<false>(params + i), _0));
+                                Store<false>(dst + i, SynetRelu32f(value, Load<false>(params + i), _0));
                             }
                             for (; i < count; ++i)
-                                dst[i] = Base::SynetPreluLayerForward(dst[i] + bias[i], params[i]);
+                                dst[i] = Base::SynetRelu32f(dst[i] + bias[i], params[i]);
                             dst += count;
                         }
                     }
@@ -201,10 +201,10 @@ namespace Simd
                             for (; j < aligned; j += F)
                             {
                                 float32x4_t value = vaddq_f32(Load<false>(dst + j), _bias);
-                                Store<false>(dst + j, SynetPreluLayerForward(value, _slope, _0));
+                                Store<false>(dst + j, SynetRelu32f(value, _slope, _0));
                             }
                             for (; j < size; ++j)
-                                dst[j] = Base::SynetPreluLayerForward(dst[j] + bias[i], params[i]);
+                                dst[j] = Base::SynetRelu32f(dst[j] + bias[i], params[i]);
                             dst += size;
                         }
                     }
@@ -331,19 +331,18 @@ namespace Simd
         SynetConvolution32fGemmNT::SynetConvolution32fGemmNT(const ConvParam32f & p)
             : Base::SynetConvolution32fGemmNT(p)
         {
+            _gemm.Init(InitGemmFuncs(Neon::Gemm32fNT, "Neon"));
+            _biasAndActivation = Neon::ConvolutionBiasAndActivation;
         }
 
         bool SynetConvolution32fGemmNT::Preferable(const ConvParam32f & p)
         {
-            return p.srcH < 4 && p.srcW < 4 && p.group == 1 && p.trans == 0;
-        }
-
-        void SynetConvolution32fGemmNT::GemmAndBias(const float * src, float * dst)
-        {
-            const ConvParam32f & p = _param;
-            for (size_t g = 0; g < p.group; ++g)
-                Gemm32fNT(_M, _N, _K, &_1, _weight + _weightStep * g, _K, src + _srcStep * g, _K, &_0, dst + _dstStep * g, _N);
-            ConvolutionBiasAndActivation(_bias, p.dstC, p.dstH*p.dstW, p.activation, _params, ::SimdFalse, dst);
+            if (p.group != 1)
+                return false;
+            if (p.trans)
+                return p.Is1x1() && p.dstC == 1;
+            else
+                return p.srcH < 4 && p.srcW < 4;
         }
 
         //---------------------------------------------------------------------
@@ -351,32 +350,67 @@ namespace Simd
         SynetConvolution32fWinograd::SynetConvolution32fWinograd(const ConvParam32f & p)
             : Base::SynetConvolution32fWinograd(p)
         {
-            if (p.trans && p.srcH >= 8 && p.srcW >= 8 && p.srcH*p.srcW*p.batch >= 144)
-                SetBlock(4);
-            else if (p.trans && p.srcH >= 6 && p.srcW >= 6 && p.srcH*p.srcW*p.batch >= 81 && p.dstH % 3 == 0 && p.dstW % 3 == 0)
-                SetBlock(3);
-            else
-                SetBlock(2);
-            switch (_block)
+            if (p.kernelY == 1 && p.kernelX == 3)
             {
-            case 2:
-                _setFilter = Neon::Winograd2x3SetFilter;
-                _setInput = Neon::Winograd2x3SetInput;
-                _setOutput = Neon::Winograd2x3SetOutput;
-                break;
-            case 3:
-                _setFilter = Neon::Winograd3x3SetFilter;
-                _setInput = Neon::Winograd3x3SetInput;
-                _setOutput = Neon::Winograd3x3SetOutput;
-                break;
-            case 4:
-                _setFilter = Neon::Winograd4x3SetFilter;
-                _setInput = Neon::Winograd4x3SetInput;
-                _setOutput = Neon::Winograd4x3SetOutput;
-                break;
-            default:
-                assert(0);
+                {
+                    SetBlock(1, 4);
+                    _setFilter = Neon::WinogradKernel1x3Block1x4SetFilter;
+                    _setInput = Neon::WinogradKernel1x3Block1x4SetInput;
+                    _setOutput = Neon::WinogradKernel1x3Block1x4SetOutput;
+                }
             }
+            else if (p.kernelY == 1 && p.kernelX == 5)
+            {
+                {
+                    SetBlock(1, 4);
+                    _setFilter = Neon::WinogradKernel1x5Block1x4SetFilter;
+                    _setInput = Neon::WinogradKernel1x5Block1x4SetInput;
+                    _setOutput = Neon::WinogradKernel1x5Block1x4SetOutput;
+                }
+            }
+            else if (p.kernelY == 2 && p.kernelX == 2)
+            {
+                if (p.trans && p.srcH >= 8 && p.srcW >= 8 && p.srcH * p.srcW * p.batch >= 144)
+                {
+                    SetBlock(4, 4);
+                    _setFilter = Neon::WinogradKernel2x2Block4x4SetFilter;
+                    _setInput = Neon::WinogradKernel2x2Block4x4SetInput;
+                    _setOutput = Neon::WinogradKernel2x2Block4x4SetOutput;
+                }
+                else
+                {
+                    SetBlock(2, 2);
+                    _setFilter = Neon::WinogradKernel2x2Block2x2SetFilter;
+                    _setInput = Neon::WinogradKernel2x2Block2x2SetInput;
+                    _setOutput = Neon::WinogradKernel2x2Block2x2SetOutput;
+                }
+            }
+            else if (p.kernelY == 3 && p.kernelX == 3)
+            {
+                if (p.trans && p.srcH >= 8 && p.srcW >= 8 && p.srcH * p.srcW * p.batch >= 144)
+                {
+                    SetBlock(4, 4);
+                    _setFilter = Neon::WinogradKernel3x3Block4x4SetFilter;
+                    _setInput = Neon::WinogradKernel3x3Block4x4SetInput;
+                    _setOutput = Neon::WinogradKernel3x3Block4x4SetOutput;
+                }
+                else if (p.trans && p.srcH >= 6 && p.srcW >= 6 && p.srcH * p.srcW * p.batch >= 81 && p.dstH % 3 == 0 && p.dstW % 3 == 0)
+                {
+                    SetBlock(3, 3);
+                    _setFilter = Neon::WinogradKernel3x3Block3x3SetFilter;
+                    _setInput = Neon::WinogradKernel3x3Block3x3SetInput;
+                    _setOutput = Neon::WinogradKernel3x3Block3x3SetOutput;
+                }
+                else
+                {
+                    SetBlock(2, 2);
+                    _setFilter = Neon::WinogradKernel3x3Block2x2SetFilter;
+                    _setInput = Neon::WinogradKernel3x3Block2x2SetInput;
+                    _setOutput = Neon::WinogradKernel3x3Block2x2SetOutput;
+                }
+            }
+            else
+                assert(0);
             _gemm.Init(InitGemmFuncs(Neon::Gemm32fNN, "Neon", p.gemm, "Ext"));
             if (_param.trans)
             {
@@ -400,8 +434,38 @@ namespace Simd
 
         bool SynetConvolution32fWinograd::Preferable(const ConvParam32f & p)
         {
-            return p.IsKernel(3) && p.IsDilation(1) && p.IsStride(1) && (p.IsPad(0) || p.IsPad(1)) && p.group == 1 && p.srcC >= 10 &&
-                (p.trans ? (p.srcH >= 4 && p.srcW >= 4 && p.srcH*p.srcW*p.batch >= 36) : (p.srcH >= 6 && p.srcW >= 6));
+            if (!p.IsDilation(1) || !p.IsStride(1) || p.group != 1 || p.srcC < 10)
+                return false;
+            if (p.IsKernel(1, 3))
+            {
+                if (!(p.IsPad(0) || (p.padX == 1 && p.padW == 1)))
+                    return false;
+                if (p.srcC <= 32)
+                    return false;
+                return p.trans && p.srcW >= 8 && p.srcH * p.srcW * p.batch >= 36;
+            }
+            else if (p.IsKernel(1, 5))
+            {
+                if (!(p.IsPad(0) || (p.padX == 2 && p.padW == 2)))
+                    return false;
+                return p.trans && p.srcW >= 8 && p.srcH * p.srcW * p.batch >= 36;
+            }
+            else if (p.IsKernel(2))
+            {
+                if (!(p.IsPad(0) || (p.padY + p.padH == 1 && p.padX + p.padW == 1)))
+                    return false;
+                return p.trans && p.srcH >= 4 && p.srcW >= 4 && p.srcH * p.srcW * p.batch >= 36;
+            }
+            else if (p.IsKernel(3))
+            {
+                if (!(p.IsPad(0) || p.IsPad(1)))
+                    return false;
+                if (p.trans)
+                    return p.srcH >= 4 && p.srcW >= 4 && p.srcH * p.srcW * p.batch >= 36;
+                else
+                    return p.srcH >= 6 && p.srcW >= 6;
+            }
+            return false;
         }
 
         //---------------------------------------------------------------------

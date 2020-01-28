@@ -380,29 +380,6 @@ namespace Simd
 
         //---------------------------------------------------------------------
 
-        void SynetPoolingForwardMax(const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans)
-        {
-            if (!trans)
-            {
-                if (strideY == 1 && strideX == 1 && kernelY == 3 && kernelX == 3 && srcH == dstH && srcW == dstW && dstW > F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Avx2::NeuralPooling1x1Max3x3(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-                if (strideY == 2 && strideX == 2 && kernelY == 3 && kernelX == 3 && padY == 0 && padX == 0 && dstW > F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Avx2::NeuralPooling2x2Max3x3(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-            }
-            Avx::SynetPoolingForwardMax(src, srcC, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, trans);
-        }
-
-        //---------------------------------------------------------------------
-
         template <bool align> SIMD_INLINE void SynetScaleLayerForward(const float * src, const float * scale, const float * bias, float * dst, size_t offset)
         {
             Avx::Store<align>(dst + offset, _mm256_fmadd_ps(Avx::Load<align>(src + offset), Avx::Load<align>(scale + offset), Avx::Load<align>(bias + offset)));
@@ -789,6 +766,93 @@ namespace Simd
                     dst += count * inner;
                 }
             }
+        }
+
+        //---------------------------------------------------------------------
+
+        template<SimdSynetUnaryOperation32fType type> __m256 SynetUnaryOperation32f(__m256 value);
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fAbs>(__m256 value)
+        {
+            return _mm256_andnot_ps(_mm256_set1_ps(-0.0f), value);
+        }
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fExp>(__m256 value)
+        {
+            return Exponent(value);
+        }
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fLog>(__m256 value)
+        {
+            return Logarithm(value);
+        }
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fNeg>(__m256 value)
+        {
+            return _mm256_sub_ps(_mm256_setzero_ps(), value);
+        }
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fRsqrt>(__m256 value)
+        {
+            return _mm256_rsqrt_ps(value);
+        }
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fSqrt>(__m256 value)
+        {
+            return _mm256_sqrt_ps(value);
+        }
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fTanh>(__m256 value)
+        {
+            return Tanh(value);
+        }
+
+        template<> SIMD_INLINE __m256 SynetUnaryOperation32f<SimdSynetUnaryOperation32fZero>(__m256 value)
+        {
+            return _mm256_setzero_ps();
+        }
+
+        template<SimdSynetUnaryOperation32fType type, bool align> void SynetUnaryOperation32fLayerForward(const float* src, size_t size, float* dst)
+        {
+            size_t sizeF = AlignLo(size, F);
+            size_t sizeQF = AlignLo(size, QF);
+            size_t i = 0;
+            for (; i < sizeQF; i += QF)
+            {
+                Avx::Store<align>(dst + i + 0 * F, SynetUnaryOperation32f<type>(Avx::Load<align>(src + i + 0 * F)));
+                Avx::Store<align>(dst + i + 1 * F, SynetUnaryOperation32f<type>(Avx::Load<align>(src + i + 1 * F)));
+                Avx::Store<align>(dst + i + 2 * F, SynetUnaryOperation32f<type>(Avx::Load<align>(src + i + 2 * F)));
+                Avx::Store<align>(dst + i + 3 * F, SynetUnaryOperation32f<type>(Avx::Load<align>(src + i + 3 * F)));
+            }
+            for (; i < sizeF; i += F)
+                Avx::Store<align>(dst + i, SynetUnaryOperation32f<type>(Avx::Load<align>(src + i)));
+            for (; i < size; ++i)
+                dst[i] = Base::SynetUnaryOperation32f<type>(src[i]);
+        }
+
+        template<bool align> void SynetUnaryOperation32fLayerForward(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst)
+        {
+            switch (type)
+            {
+            case SimdSynetUnaryOperation32fAbs: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fAbs, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fExp: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fExp, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fLog: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fLog, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fNeg: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fNeg, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fRsqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fRsqrt, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fSqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fSqrt, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fTanh: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fTanh, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fZero: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fZero, align>(src, size, dst); break;
+            default:
+                assert(0);
+            }
+        }
+
+        void SynetUnaryOperation32fLayerForward(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst)
+        {
+            if (Aligned(src) && Aligned(dst))
+                SynetUnaryOperation32fLayerForward<true>(src, size, type, dst);
+            else
+                SynetUnaryOperation32fLayerForward<false>(src, size, type, dst);
         }
     }
 #endif// SIMD_AVX2_ENABLE

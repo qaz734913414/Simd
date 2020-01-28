@@ -82,7 +82,7 @@ namespace Simd
                 else
                 {
                     float slope = 0;
-                    NeuralRelu(dst, size*count, &slope, dst);
+                    SynetRelu32f(dst, size*count, &slope, dst);
                 }
             }
             else if (activation == ::SimdConvolutionActivationLeakyRelu)
@@ -99,10 +99,10 @@ namespace Simd
                             for (; i < aligned; i += F)
                             {
                                 __m256 value = _mm256_add_ps(_mm256_loadu_ps(dst + i), _mm256_loadu_ps(bias + i));
-                                _mm256_storeu_ps(dst + i, SynetPreluLayerForward(value, _slope));
+                                _mm256_storeu_ps(dst + i, SynetRelu32f(value, _slope));
                             }
                             for (; i < count; ++i)
-                                dst[i] = Base::SynetPreluLayerForward(dst[i] + bias[i], slope);
+                                dst[i] = Base::SynetRelu32f(dst[i] + bias[i], slope);
                             dst += count;
                         }
                     }
@@ -115,16 +115,16 @@ namespace Simd
                             for (; j < aligned; j += F)
                             {
                                 __m256 value = _mm256_add_ps(_mm256_loadu_ps(dst + j), _bias);
-                                _mm256_storeu_ps(dst + j, SynetPreluLayerForward(value, _slope));
+                                _mm256_storeu_ps(dst + j, SynetRelu32f(value, _slope));
                             }
                             for (; j < size; ++j)
-                                dst[j] = Base::SynetPreluLayerForward(dst[j] + bias[i], slope);
+                                dst[j] = Base::SynetRelu32f(dst[j] + bias[i], slope);
                             dst += size;
                         }
                     }
                 }
                 else
-                    NeuralRelu(dst, size*count, &slope, dst);
+                    SynetRelu32f(dst, size*count, &slope, dst);
             }
             else if (activation == ::SimdConvolutionActivationRestrictRange)
             {
@@ -204,13 +204,13 @@ namespace Simd
                             for (; i < nF; i += F)
                             {
                                 __m256 value = _mm256_add_ps(_mm256_loadu_ps(dst + i), _bias);
-                                _mm256_storeu_ps(dst + i, SynetPreluLayerForward(value, _slope));
+                                _mm256_storeu_ps(dst + i, SynetRelu32f(value, _slope));
                             }
                             dst += nF;
                             for (size_t j = nF/count; j < size; ++j)
                             {
                                 for (size_t i = 0; i < count; ++i)
-                                    dst[i] = Base::SynetPreluLayerForward(dst[i] + bias[i], params[i]);
+                                    dst[i] = Base::SynetRelu32f(dst[i] + bias[i], params[i]);
                                 dst += count;
                             }
                         }
@@ -222,10 +222,10 @@ namespace Simd
                                 for (; i < aligned; i += F)
                                 {
                                     __m256 value = _mm256_add_ps(_mm256_loadu_ps(dst + i), _mm256_loadu_ps(bias + i));
-                                    _mm256_storeu_ps(dst + i, SynetPreluLayerForward(value, _mm256_loadu_ps(params + i)));
+                                    _mm256_storeu_ps(dst + i, SynetRelu32f(value, _mm256_loadu_ps(params + i)));
                                 }
                                 for (; i < count; ++i)
-                                    dst[i] = Base::SynetPreluLayerForward(dst[i] + bias[i], params[i]);
+                                    dst[i] = Base::SynetRelu32f(dst[i] + bias[i], params[i]);
                                 dst += count;
                             }
                         }
@@ -240,10 +240,10 @@ namespace Simd
                             for (; j < aligned; j += F)
                             {
                                 __m256 value = _mm256_add_ps(_mm256_loadu_ps(dst + j), _bias);
-                                _mm256_storeu_ps(dst + j, SynetPreluLayerForward(value, _slope));
+                                _mm256_storeu_ps(dst + j, SynetRelu32f(value, _slope));
                             }
                             for (; j < size; ++j)
-                                dst[j] = Base::SynetPreluLayerForward(dst[j] + bias[i], params[i]);
+                                dst[j] = Base::SynetRelu32f(dst[j] + bias[i], params[i]);
                             dst += size;
                         }
                     }
@@ -293,7 +293,9 @@ namespace Simd
                 }
             }
             else
-                assert(0);
+            {
+                Sse2::ConvolutionBiasAndActivation(bias, count, size, activation, params, trans, dst);
+            }
         }
 
         //---------------------------------------------------------------------
@@ -529,14 +531,8 @@ namespace Simd
         SynetConvolution32fGemmNT::SynetConvolution32fGemmNT(const ConvParam32f & p)
             : Sse3::SynetConvolution32fGemmNT(p)
         {
-        }
-
-        void SynetConvolution32fGemmNT::GemmAndBias(const float * src, float * dst)
-        {
-            const ConvParam32f & p = _param;
-            for (size_t g = 0; g < p.group; ++g)
-                Avx::Gemm32fNT(_M, _N, _K, &_1, _weight + _weightStep * g, _K, src + _srcStep * g, _K, &_0, dst + _dstStep * g, _N);
-            Avx::ConvolutionBiasAndActivation(_bias, p.dstC, p.dstH*p.dstW, p.activation, _params, ::SimdFalse, dst);
+            _gemm.Init(InitGemmFuncs(Avx::Gemm32fNT, "Avx"));
+            _biasAndActivation = Avx::ConvolutionBiasAndActivation;
         }
 
         //---------------------------------------------------------------------
@@ -544,26 +540,68 @@ namespace Simd
         SynetConvolution32fWinograd::SynetConvolution32fWinograd(const ConvParam32f & p)
             : Sse2::SynetConvolution32fWinograd(p)
         {
-            switch (_block)
+            if (p.kernelY == 1 && p.kernelX == 3)
             {
-            case 2:
-                _setFilter = Avx::Winograd2x3SetFilter;
-                _setInput = Avx::Winograd2x3SetInput;
-                _setOutput = Avx::Winograd2x3SetOutput;
-                break;
-            case 3:
-                _setFilter = Avx::Winograd3x3SetFilter;
-                _setInput = Avx::Winograd3x3SetInput;
-                _setOutput = Avx::Winograd3x3SetOutput;
-                break;
-            case 4:
-                _setFilter = Avx::Winograd4x3SetFilter;
-                _setInput = Avx::Winograd4x3SetInput;
-                _setOutput = Avx::Winograd4x3SetOutput;
-                break;
-            default:
-                assert(0);
+                {
+                    SetBlock(1, 4);
+                    _setFilter = Avx::WinogradKernel1x3Block1x4SetFilter;
+                    _setInput = Avx::WinogradKernel1x3Block1x4SetInput;
+                    _setOutput = Avx::WinogradKernel1x3Block1x4SetOutput;
+                }
             }
+            else if (p.kernelY == 1 && p.kernelX == 5)
+            {
+                {
+                    SetBlock(1, 4);
+                    _setFilter = Avx::WinogradKernel1x5Block1x4SetFilter;
+                    _setInput = Avx::WinogradKernel1x5Block1x4SetInput;
+                    _setOutput = Avx::WinogradKernel1x5Block1x4SetOutput;
+                }
+            }
+            else if (p.kernelY == 2 && p.kernelX == 2)
+            {
+                if (_blockY == 4 && _blockX == 4)
+                {
+                    SetBlock(4, 4);
+                    _setFilter = Avx::WinogradKernel2x2Block4x4SetFilter;
+                    _setInput = Avx::WinogradKernel2x2Block4x4SetInput;
+                    _setOutput = Avx::WinogradKernel2x2Block4x4SetOutput;
+                }
+                else if (_blockY == 2 && _blockX == 2)
+                {
+                    SetBlock(2, 2);
+                    _setFilter = Avx::WinogradKernel2x2Block2x2SetFilter;
+                    _setInput = Avx::WinogradKernel2x2Block2x2SetInput;
+                    _setOutput = Avx::WinogradKernel2x2Block2x2SetOutput;
+                }
+                else
+                    assert(0);
+            }
+            else if (p.kernelY == 3 && p.kernelX == 3)
+            {
+                if (_blockY == 4 && _blockX == 4)
+                {
+                    _setFilter = Avx::WinogradKernel3x3Block4x4SetFilter;
+                    _setInput = Avx::WinogradKernel3x3Block4x4SetInput;
+                    _setOutput = Avx::WinogradKernel3x3Block4x4SetOutput;
+                }
+                else if (_blockY == 3 && _blockX == 3)
+                {
+                    _setFilter = Avx::WinogradKernel3x3Block3x3SetFilter;
+                    _setInput = Avx::WinogradKernel3x3Block3x3SetInput;
+                    _setOutput = Avx::WinogradKernel3x3Block3x3SetOutput;
+                }
+                else if (_blockY == 2 && _blockX == 2)
+                {
+                    _setFilter = Avx::WinogradKernel3x3Block2x2SetFilter;
+                    _setInput = Avx::WinogradKernel3x3Block2x2SetInput;
+                    _setOutput = Avx::WinogradKernel3x3Block2x2SetOutput;
+                }
+                else
+                    assert(0);
+            }
+            else
+                assert(0);
             _gemm.Init(InitGemmFuncs(Avx::Gemm32fNN, "Avx", p.gemm, "Ext"));
             if (_param.trans)
             {
@@ -843,6 +881,8 @@ namespace Simd
             if (p.group == 1)
             {
                 if (p.kernelY > p.srcH || p.kernelX > p.srcW)
+                    return false;
+                if (p.trans && p.IsKernel(1) && p.dstC < Sse::F)
                     return false;
                 return p.srcC <= 16 || (p.IsKernel(1) && p.srcC*p.dstC <= 8 * 1024 && p.dstC >= F && p.dstC > p.srcC);
             }

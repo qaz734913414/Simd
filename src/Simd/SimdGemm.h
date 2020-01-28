@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -290,15 +290,17 @@ namespace Simd
     public:
         typedef void(*Main)(size_t K, T alpha, const T * A, size_t lda, const T * B, size_t ldb, size_t sb, T * C, size_t ldc, TM tail);
         typedef void(*Tail)(size_t M, size_t K, T alpha, const T * A, size_t lda, const T * B, size_t ldb, size_t sb, T * C, size_t ldc, TM tail);
+        typedef void(*PackA)(const T * A, size_t lda, size_t M, size_t K, size_t microM, T * pA);
         typedef void(*PackB)(const T * B, size_t ldb, size_t K, size_t N, size_t microN, T * pB);
         typedef void(*ScaleC)(size_t M, size_t N, T beta, T * C, size_t ldc);
         typedef TM(*TailMask)(ptrdiff_t tail);
 
         GemmNNcb(size_t M, size_t N, size_t K, size_t microM, size_t microN, size_t L1, size_t L2, size_t L3, size_t F,
-            Main kernelMM, Main kernelMT, Tail kernelTM, Tail kernelTT, PackB packB, ScaleC scaleC, TailMask tailMask, bool compatible = false)
+            Main kernelMM, Main kernelMT, Tail kernelTM, Tail kernelTT, PackA packA, PackB packB, ScaleC scaleC, TailMask tailMask, bool compatible = false)
             : _0(0)
             , _1(1)
         {
+            L2 = Simd::RestrictRange(size_t(::sqrt(L1 * L3)), L2/4, L2);
             _compatible = compatible;
             _M = M;
             _N = N;
@@ -312,9 +314,15 @@ namespace Simd
             _kernelTT = kernelTT;
             _scaleC = scaleC;
             _packB = packB;
+            _packA = packA;
             _macroK = Simd::Min(L1 / sizeof(T) / _microN, _K);
             _macroM = Simd::Min(AlignLoAny(L2 / sizeof(T) / _macroK, _microM), AlignHiAny(_M, _microM));
             _macroN = Simd::Min(AlignLoAny(L3 / sizeof(T) / _macroK, _microN), AlignHiAny(_N, _compatible ? _F : _microN));
+            if (_packA)
+            {
+
+                _pA.Resize(_macroM * _macroK);
+            }
             size_t NF = AlignLo(_N, _F);
             if (tailMask)
             {
@@ -388,6 +396,14 @@ namespace Simd
 
         void MacroKernelSpecific(size_t M, size_t N, size_t K, const T * A, size_t lda, const T * pB, T * C, size_t ldc)
         {
+            size_t klda = lda;
+            if (_packA)
+            {
+                _packA(A, lda, M, K, _microM, _pA.data);
+                A = _pA.data;
+                lda = K;
+                klda = 1;
+            }
             size_t MA = AlignLoAny(M, _microM);
             size_t NA = AlignLoAny(N, _microN);
             size_t j = 0;
@@ -395,23 +411,32 @@ namespace Simd
             {
                 size_t i = 0;
                 for (; i < MA; i += _microM)
-                    _kernelMM(K, _1, A + i * lda, lda, pB, _F, _microN, C + i * ldc + j, ldc, _main);
+                    _kernelMM(K, _1, A + i * lda, klda, pB, _F, _microN, C + i * ldc + j, ldc, _main);
                 if (i < M)
-                    _kernelTM(M - i, K, _1, A + i * lda, lda, pB, _F, _microN, C + i * ldc + j, ldc, _main);
+                    _kernelTM(M - i, K, _1, A + i * lda, klda, pB, _F, _microN, C + i * ldc + j, ldc, _main);
                 pB += _microN * K;
             }
             if (j < N)
             {
                 size_t i = 0;
                 for (; i < MA; i += _microM)
-                    _kernelMT(K, _1, A + i * lda, lda, pB, _F, _microN, C + i * ldc + j, ldc, _tail);
+                    _kernelMT(K, _1, A + i * lda, klda, pB, _F, _microN, C + i * ldc + j, ldc, _tail);
                 if (i < M)
-                    _kernelTT(M - i, K, _1, A + i * lda, lda, pB, _F, _microN, C + i * ldc + j, ldc, _tail);
+                    _kernelTT(M - i, K, _1, A + i * lda, klda, pB, _F, _microN, C + i * ldc + j, ldc, _tail);
             }
         }
 
         void MacroKernelCompatible(size_t M, size_t N, size_t K, const T * A, size_t lda, const T * pB, T * C, size_t ldc)
         {
+            size_t klda = lda, plda = lda;
+            T * pA = (T*)A;
+            if (_packA)
+            {
+                //_packA(A, lda, M, K, _microM, _pA.data);
+                pA = _pA.data;
+                plda = K;
+                klda = 1;
+            }
             size_t MA = AlignLoAny(M, _microM);
             size_t NA = AlignLoAny(N, _microN);
             size_t j = 0;
@@ -419,20 +444,38 @@ namespace Simd
             {
                 size_t i = 0;
                 for (; i < MA; i += _microM)
-                    _kernelMM(K, _1, A + i * lda, lda, pB, _F*_K, _F, C + i * ldc + j, ldc, _main);
+                {
+                    if (_packA && j == 0)
+                        _packA(A + i * lda, lda, _microM, K, _microM, pA + i * plda);
+                    _kernelMM(K, _1, pA + i * plda, klda, pB, _F * _K, _F, C + i * ldc + j, ldc, _main);
+                }
                 if (i < M)
-                    _kernelTM(M - i, K, _1, A + i * lda, lda, pB, _F*_K, _F, C + i * ldc + j, ldc, _main);
+                {
+                    if (_packA && j == 0)
+                        _packA(A + i * lda, lda, M - i, K, _microM, pA + i * plda);
+                    _kernelTM(M - i, K, _1, pA + i * plda, klda, pB, _F * _K, _F, C + i * ldc + j, ldc, _main);
+                }
                 pB += _microN * _K;
             }
             if (j < N)
             {
                 size_t i = 0;
                 for (; i < MA; i += _microM)
-                    _kernelMT(K, _1, A + i * lda, lda, pB, _F*_K, _F, C + i * ldc + j, ldc, _tail);
+                {
+                    if (_packA && j == 0)
+                        _packA(A + i * lda, lda, _microM, K, _microM, pA + i * plda);
+                    _kernelMT(K, _1, pA + i * plda, klda, pB, _F * _K, _F, C + i * ldc + j, ldc, _tail);
+                }
                 if (i < M)
-                    _kernelTT(M - i, K, _1, A + i * lda, lda, pB, _F*_K, _F, C + i * ldc + j, ldc, _tail);
+                {
+                    if (_packA && j == 0)
+                        _packA(A + i * lda, lda, M - i, K, _microM, pA + i * plda);
+                    _kernelTT(M - i, K, _1, pA + i * plda, klda, pB, _F * _K, _F, C + i * ldc + j, ldc, _tail);
+                }
             }
         }
+
+        typedef Simd::Array<T> Array;
 
         size_t _M, _N, _K, _microM, _microN, _macroM, _macroN, _macroK, _F;
         TM _main, _tail;
@@ -440,6 +483,8 @@ namespace Simd
         Tail _kernelTM, _kernelTT;
         ScaleC _scaleC;
         PackB _packB;
+        PackA _packA;
+        Array _pA;
         T _0, _1;
         bool _compatible;
     };
@@ -528,6 +573,8 @@ namespace Simd
         void GemmKernel4x32nn(size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, size_t sb, float * C, size_t ldc, __mmask16 mask);
         void GemmKernel4x16nn(size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, size_t sb, float * C, size_t ldc, __mmask16 mask);
 
+        void GemmKernel6x64nn(size_t K, float alpha, const float* A, size_t lda, const float* B, size_t ldb, size_t sb, float* C, size_t ldc, __mmask16 mask);
+        void GemmKernel6x48nn(size_t K, float alpha, const float* A, size_t lda, const float* B, size_t ldb, size_t sb, float* C, size_t ldc, __mmask16 mask);
         void GemmKernel6x32nn(size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, size_t sb, float * C, size_t ldc, __mmask16 mask);
         void GemmKernel6x16nn(size_t K, float alpha, const float * A, size_t lda, const float * B, size_t ldb, size_t sb, float * C, size_t ldc, __mmask16 mask);
 

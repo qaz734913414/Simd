@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -378,7 +378,7 @@ namespace Simd
                 d11 = _mm512_setzero_ps();
                 d21 = _mm512_setzero_ps();
                 d31 = _mm512_setzero_ps();
-                for (; k < K16; k += 32)
+                for (; k < K32; k += 32)
                 {
                     s0 = _mm512_loadu_ps(S0 + k + 0 * F);
                     s1 = _mm512_loadu_ps(S0 + k + 1 * F);
@@ -583,352 +583,6 @@ namespace Simd
                 SynetLrnLayerCrossChannelsNhwc(src, half, channels, spatial, k, dst);
             else
                 Base::SynetLrnLayerCrossChannels(src, half, channels, spatial, k, dst, format);
-        }
-
-        //---------------------------------------------------------------------
-
-        SIMD_INLINE void PoolingMaxHwc1(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const __m512 & min, float * dst, __mmask16 tail = -1)
-        {
-            __m512 max0 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = _mm512_max_ps(max0, _mm512_maskz_loadu_ps(tail, src + w * srcC + 0 * F));
-                }
-                src += srcS;
-            }
-            _mm512_mask_storeu_ps(dst + 0 * F, tail, max0);
-        }
-
-        SIMD_INLINE void PoolingMaxHwc2(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const __m512 & min, float * dst)
-        {
-            __m512 max0 = min;
-            __m512 max1 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = _mm512_max_ps(max0, _mm512_loadu_ps(src + w * srcC + 0 * F));
-                    max1 = _mm512_max_ps(max1, _mm512_loadu_ps(src + w * srcC + 1 * F));
-                }
-                src += srcS;
-            }
-            _mm512_storeu_ps(dst + 0 * F, max0);
-            _mm512_storeu_ps(dst + 1 * F, max1);
-        }
-
-        SIMD_INLINE void PoolingMaxHwc4(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const __m512 & min, float * dst)
-        {
-            __m512 max0 = min;
-            __m512 max1 = min;
-            __m512 max2 = min;
-            __m512 max3 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = _mm512_max_ps(max0, _mm512_loadu_ps(src + w * srcC + 0 * F));
-                    max1 = _mm512_max_ps(max1, _mm512_loadu_ps(src + w * srcC + 1 * F));
-                    max2 = _mm512_max_ps(max2, _mm512_loadu_ps(src + w * srcC + 2 * F));
-                    max3 = _mm512_max_ps(max3, _mm512_loadu_ps(src + w * srcC + 3 * F));
-                }
-                src += srcS;
-            }
-            _mm512_storeu_ps(dst + 0 * F, max0);
-            _mm512_storeu_ps(dst + 1 * F, max1);
-            _mm512_storeu_ps(dst + 2 * F, max2);
-            _mm512_storeu_ps(dst + 3 * F, max3);
-        }
-
-        SIMD_INLINE void PoolingMaxHwc8(const float * src, size_t srcS, size_t srcC, size_t kH, size_t kW, const __m512 & min, float * dst)
-        {
-            __m512 max0 = min;
-            __m512 max1 = min;
-            __m512 max2 = min;
-            __m512 max3 = min;
-            __m512 max4 = min;
-            __m512 max5 = min;
-            __m512 max6 = min;
-            __m512 max7 = min;
-            for (size_t h = 0; h < kH; ++h)
-            {
-                for (size_t w = 0; w < kW; ++w)
-                {
-                    max0 = _mm512_max_ps(max0, _mm512_loadu_ps(src + w * srcC + 0 * F));
-                    max1 = _mm512_max_ps(max1, _mm512_loadu_ps(src + w * srcC + 1 * F));
-                    max2 = _mm512_max_ps(max2, _mm512_loadu_ps(src + w * srcC + 2 * F));
-                    max3 = _mm512_max_ps(max3, _mm512_loadu_ps(src + w * srcC + 3 * F));
-                    max4 = _mm512_max_ps(max4, _mm512_loadu_ps(src + w * srcC + 4 * F));
-                    max5 = _mm512_max_ps(max5, _mm512_loadu_ps(src + w * srcC + 5 * F));
-                    max6 = _mm512_max_ps(max6, _mm512_loadu_ps(src + w * srcC + 6 * F));
-                    max7 = _mm512_max_ps(max7, _mm512_loadu_ps(src + w * srcC + 7 * F));
-                }
-                src += srcS;
-            }
-            _mm512_storeu_ps(dst + 0 * F, max0);
-            _mm512_storeu_ps(dst + 1 * F, max1);
-            _mm512_storeu_ps(dst + 2 * F, max2);
-            _mm512_storeu_ps(dst + 3 * F, max3);
-            _mm512_storeu_ps(dst + 4 * F, max4);
-            _mm512_storeu_ps(dst + 5 * F, max5);
-            _mm512_storeu_ps(dst + 6 * F, max6);
-            _mm512_storeu_ps(dst + 7 * F, max7);
-        }
-
-        void SynetPoolingForwardMax(const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-            size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans)
-        {
-            if (trans)
-            {
-                size_t srcS = srcW * srcC;
-                size_t srcCF1 = AlignLo(srcC, 1 * F);
-                size_t srcCF2 = AlignLo(srcC, 2 * F);
-                size_t srcCF4 = AlignLo(srcC, 4 * F);
-                size_t srcCF8 = AlignLo(srcC, 8 * F);
-                __m512 min = _mm512_set1_ps(-FLT_MAX);
-                __mmask16 tail = TailMask16(srcC - srcCF1);
-                for (size_t ph = 0; ph < dstH; ++ph)
-                {
-                    size_t hStart = ph * strideY - padY;
-                    size_t hEnd = Simd::Min(hStart + kernelY, srcH);
-                    hStart = Simd::Max<ptrdiff_t>(0, hStart);
-                    for (size_t pw = 0; pw < dstW; ++pw)
-                    {
-                        size_t wStart = pw * strideX - padX;
-                        size_t wEnd = Simd::Min(wStart + kernelX, srcW);
-                        wStart = Simd::Max<ptrdiff_t>(0, wStart);
-                        const float * ps = src + hStart * srcS + wStart * srcC;
-                        size_t c = 0;
-                        for (; c < srcCF8; c += 8 * F)
-                            PoolingMaxHwc8(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                        for (; c < srcCF4; c += 4 * F)
-                            PoolingMaxHwc4(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                        for (; c < srcCF2; c += 2 * F)
-                            PoolingMaxHwc2(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                        for (; c < srcCF1; c += 1 * F)
-                            PoolingMaxHwc1(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c);
-                        if (c < srcC)
-                            PoolingMaxHwc1(ps + c, srcS, srcC, hEnd - hStart, wEnd - wStart, min, dst + c, tail);
-                        dst += srcC;
-                    }
-                }
-                return;
-            }
-            else
-            {
-                if (strideY == 1 && strideX == 1 && kernelY == 3 && kernelX == 3 && srcH == dstH && srcW == dstW && dstW > F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Avx512f::NeuralPooling1x1Max3x3(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-                if (strideY == 2 && strideX == 2 && kernelY == 2 && kernelX == 2 && padY == 0 && padX == 0 && dstW >=  F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Avx512f::NeuralPooling2x2Max2x2(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-                if (strideY == 2 && strideX == 2 && kernelY == 3 && kernelX == 3 && padY == 0 && padX == 0 && dstW > F)
-                {
-                    for (size_t c = 0; c < srcC; ++c, src += srcH * srcW, dst += dstH * dstW)
-                        Avx512f::NeuralPooling2x2Max3x3(src, srcW, srcW, srcH, dst, dstW);
-                    return;
-                }
-            }
-            Avx2::SynetPoolingForwardMax(src, srcC, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, trans);
-        }
-
-        //---------------------------------------------------------------------
-
-        template <bool align, bool mask> SIMD_INLINE void SynetPreluLayerForward(const float * src, const float * slope, float * dst, size_t offset, __mmask16 tail = -1)
-        {
-            __m512 _src = Load<align, mask>(src + offset, tail);
-            __m512 _slope = Load<align, mask>(slope + offset, tail);
-            __m512 pos = _mm512_max_ps(_mm512_setzero_ps(), _src);
-            __m512 neg = _mm512_min_ps(_mm512_setzero_ps(), _src);
-            Store<align, mask>(dst + offset, _mm512_add_ps(pos, _mm512_mul_ps(_slope, neg)), tail);
-        }
-
-        template <bool align, bool mask> SIMD_INLINE void SynetPreluLayerForward(const float * src, __m512 slope, float * dst, size_t offset, __mmask16 tail = -1)
-        {
-            __m512 _src = Load<align, mask>(src + offset, tail);
-            __m512 pos = _mm512_max_ps(_mm512_setzero_ps(), _src);
-            __m512 neg = _mm512_min_ps(_mm512_setzero_ps(), _src);
-            Store<align, mask>(dst + offset, _mm512_add_ps(pos, _mm512_mul_ps(slope, neg)), tail);
-        }
-
-        template <bool align> void SynetPreluLayerForward(const float * src, const float * slope, size_t count, size_t size, float * dst, SimdBool trans)
-        {
-            if (align)
-                assert(((trans || size == 1) && count != 1 ? Aligned(count) && Aligned(slope) : Aligned(size)) && Aligned(src) && Aligned(dst));
-            if ((trans || size == 1) && count != 1)
-            {
-                size_t aligned = AlignLo(count, QF);
-                size_t partial = AlignLo(count, F);
-                __mmask16 tail = __mmask16(-1) >> (F + partial - count);
-                for (size_t j = 0; j < size; ++j)
-                {
-                    size_t i = 0;
-                    for (; i < aligned; i += QF)
-                    {
-                        SynetPreluLayerForward<align, false>(src, slope, dst, i + F * 0);
-                        SynetPreluLayerForward<align, false>(src, slope, dst, i + F * 1);
-                        SynetPreluLayerForward<align, false>(src, slope, dst, i + F * 2);
-                        SynetPreluLayerForward<align, false>(src, slope, dst, i + F * 3);
-                    }
-                    for (; i < partial; i += F)
-                        SynetPreluLayerForward<align, false>(src, slope, dst, i);
-                    if(i < count)
-                        SynetPreluLayerForward<align, true>(src, slope, dst, i, tail);
-                    src += count;
-                    dst += count;
-                }
-            }
-            else
-            {
-                size_t aligned = AlignLo(size, QF);
-                size_t partial = AlignLo(size, F);
-                __mmask16 tail = __mmask16(-1) >> (F + partial - size);
-                for (size_t i = 0; i < count; ++i)
-                {
-                    size_t j = 0;
-                    __m512 _slope = _mm512_set1_ps(slope[i]);
-                    for (; j < aligned; j += QF)
-                    {
-                        SynetPreluLayerForward<align, false>(src, _slope, dst, j + F * 0);
-                        SynetPreluLayerForward<align, false>(src, _slope, dst, j + F * 1);
-                        SynetPreluLayerForward<align, false>(src, _slope, dst, j + F * 2);
-                        SynetPreluLayerForward<align, false>(src, _slope, dst, j + F * 3);
-                    }
-                    for (; j < partial; j += F)
-                        SynetPreluLayerForward<align, false>(src, _slope, dst, j);
-                    if (i < count)
-                        SynetPreluLayerForward<align, true>(src, _slope, dst, j, tail);
-                    src += size;
-                    dst += size;
-                }
-            }
-        }
-
-        template <bool align> void SynetPreluLayerForwardNchw(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (align)
-                assert(Aligned(src) && Aligned(spatial, F) && Aligned(dst));
-
-            size_t aligned = AlignLo(spatial, QF);
-            size_t partial = AlignLo(spatial, F);
-            __mmask16 tail = TailMask16(spatial - partial);
-            for (size_t c = 0; c < channels; ++c)
-            {
-                size_t s = 0;
-                __m512 _slope = _mm512_set1_ps(slope[c]);
-                for (; s < aligned; s += QF)
-                {
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 0);
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 1);
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 2);
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 3);
-                }
-                for (; s < partial; s += F)
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s);
-                if (s < spatial)
-                    SynetPreluLayerForward<align, true>(src, _slope, dst, s, tail);
-                src += spatial;
-                dst += spatial;
-            }
-        }
-
-        SIMD_INLINE void SynetPreluLayerForwardNchw(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (Aligned(src) && Aligned(spatial, F) && Aligned(dst))
-                SynetPreluLayerForwardNchw<true>(src, slope, channels, spatial, dst);
-            else
-                SynetPreluLayerForwardNchw<false>(src, slope, channels, spatial, dst);
-        }
-
-        template <bool align> void SynetPreluLayerForwardNhwc(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (align)
-                assert(Aligned(src) && Aligned(slope) && Aligned(channels, F) && Aligned(dst));
-
-            size_t aligned = AlignLo(channels, QF);
-            size_t partial = AlignLo(channels, F);
-            __mmask16 tail = TailMask16(channels - partial);
-            for (size_t s = 0; s < spatial; ++s)
-            {
-                size_t c = 0;
-                for (; c < aligned; c += QF)
-                {
-                    SynetPreluLayerForward<align, false>(src, slope, dst, c + F * 0);
-                    SynetPreluLayerForward<align, false>(src, slope, dst, c + F * 1);
-                    SynetPreluLayerForward<align, false>(src, slope, dst, c + F * 2);
-                    SynetPreluLayerForward<align, false>(src, slope, dst, c + F * 3);
-                }
-                for (; c < partial; c += F)
-                    SynetPreluLayerForward<align, false>(src, slope, dst, c);
-                if (c < channels)
-                    SynetPreluLayerForward<align, true>(src, slope, dst, c, tail);
-                src += channels;
-                dst += channels;
-            }
-        }
-
-        SIMD_INLINE void SynetPreluLayerForwardNhwc(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (Aligned(src) && Aligned(slope) && Aligned(channels, F) && Aligned(dst))
-                SynetPreluLayerForwardNhwc<true>(src, slope, channels, spatial, dst);
-            else
-                SynetPreluLayerForwardNhwc<false>(src, slope, channels, spatial, dst);
-        }
-
-        template <bool align> void SynetPreluLayerForwardNchw16c(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (align)
-                assert(Aligned(src) && Aligned(dst));
-
-            size_t spatialF = spatial * F;
-            size_t spatial4F = AlignLo(spatial, 4)*F;
-            for (size_t c = 0; c < channels; c += F)
-            {
-                __m512 _slope = Load<false>(slope + c);
-                size_t s = 0;
-                for (; s < spatial4F; s += 4 * F)
-                {
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 0);
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 1);
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 2);
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s + F * 3);
-                }
-                for (; s < spatialF; s += F)
-                    SynetPreluLayerForward<align, false>(src, _slope, dst, s);
-                src += spatialF;
-                dst += spatialF;
-            }
-        }
-
-        SIMD_INLINE void SynetPreluLayerForwardNchw16c(const float * src, const float * slope, size_t channels, size_t spatial, float * dst)
-        {
-            if (Aligned(src) && Aligned(dst))
-                SynetPreluLayerForwardNchw16c<true>(src, slope, channels, spatial, dst);
-            else
-                SynetPreluLayerForwardNchw16c<false>(src, slope, channels, spatial, dst);
-        }
-
-        void SynetPreluLayerForward(const float * src, const float * slope, size_t channels, size_t spatial, float * dst, SimdTensorFormatType format)
-        {
-            if (Base::NchwCompatible(channels, spatial, format))
-                SynetPreluLayerForwardNchw(src, slope, channels, spatial, dst);
-            else if (Base::NhwcCompatible(channels, spatial, format))
-                SynetPreluLayerForwardNhwc(src, slope, channels, spatial, dst);
-            else if (format == SimdTensorFormatNchw4c)
-                Sse::SynetPreluLayerForward(src, slope, channels, spatial, dst, format);
-            else if (format == SimdTensorFormatNchw8c)
-                Avx::SynetPreluLayerForward(src, slope, channels, spatial, dst, format);
-            else if (format == SimdTensorFormatNchw16c)
-                SynetPreluLayerForwardNchw16c(src, slope, channels, spatial, dst);
-            else
-                Base::SynetPreluLayerForward(src, slope, channels, spatial, dst, format);
         }
 
         //---------------------------------------------------------------------
@@ -1484,6 +1138,96 @@ namespace Simd
                     dst += count * inner;
                 }
             }
+        }
+
+        //---------------------------------------------------------------------
+
+        template<SimdSynetUnaryOperation32fType type> __m512 SynetUnaryOperation32f(__m512 value);
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fAbs>(__m512 value)
+        {
+            return _mm512_andnot_ps(_mm512_set1_ps(-0.0f), value);
+        }
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fExp>(__m512 value)
+        {
+            return Exponent(value);
+        }
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fLog>(__m512 value)
+        {
+            return Logarithm(value);
+        }
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fNeg>(__m512 value)
+        {
+            return _mm512_sub_ps(_mm512_setzero_ps(), value);
+        }
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fRsqrt>(__m512 value)
+        {
+            return _mm512_rsqrt14_ps(value);
+        }
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fSqrt>(__m512 value)
+        {
+            return _mm512_sqrt_ps(value);
+        }
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fTanh>(__m512 value)
+        {
+            return Tanh(value);
+        }
+
+        template<> SIMD_INLINE __m512 SynetUnaryOperation32f<SimdSynetUnaryOperation32fZero>(__m512 value)
+        {
+            return _mm512_setzero_ps();
+        }
+
+        template<SimdSynetUnaryOperation32fType type, bool align> void SynetUnaryOperation32fLayerForward(const float* src, size_t size, float* dst)
+        {
+            size_t sizeF = AlignLo(size, F);
+            size_t sizeQF = AlignLo(size, QF);
+            size_t i = 0;
+            for (; i < sizeQF; i += QF)
+            {
+                Avx512f::Store<align>(dst + i + 0 * F, SynetUnaryOperation32f<type>(Avx512f::Load<align>(src + i + 0 * F)));
+                Avx512f::Store<align>(dst + i + 1 * F, SynetUnaryOperation32f<type>(Avx512f::Load<align>(src + i + 1 * F)));
+                Avx512f::Store<align>(dst + i + 2 * F, SynetUnaryOperation32f<type>(Avx512f::Load<align>(src + i + 2 * F)));
+                Avx512f::Store<align>(dst + i + 3 * F, SynetUnaryOperation32f<type>(Avx512f::Load<align>(src + i + 3 * F)));
+            }
+            for (; i < sizeF; i += F)
+                Avx512f::Store<align>(dst + i, SynetUnaryOperation32f<type>(Avx512f::Load<align>(src + i)));
+            if (i < size)
+            {
+                __mmask16 tail = TailMask16(size - sizeF);
+                Avx512f::Store<align, true>(dst + i, SynetUnaryOperation32f<type>(Avx512f::Load<align, true>(src + i, tail)), tail);
+            }
+        }
+
+        template<bool align> void SynetUnaryOperation32fLayerForward(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst)
+        {
+            switch (type)
+            {
+            case SimdSynetUnaryOperation32fAbs: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fAbs, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fExp: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fExp, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fLog: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fLog, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fNeg: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fNeg, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fRsqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fRsqrt, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fSqrt: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fSqrt, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fTanh: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fTanh, align>(src, size, dst); break;
+            case SimdSynetUnaryOperation32fZero: SynetUnaryOperation32fLayerForward<SimdSynetUnaryOperation32fZero, align>(src, size, dst); break;
+            default:
+                assert(0);
+            }
+        }
+
+        void SynetUnaryOperation32fLayerForward(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst)
+        {
+            if (Aligned(src) && Aligned(dst))
+                SynetUnaryOperation32fLayerForward<true>(src, size, type, dst);
+            else
+                SynetUnaryOperation32fLayerForward<false>(src, size, type, dst);
         }
     }
 #endif// SIMD_AVX512F_ENABLE

@@ -1,7 +1,7 @@
 /*
 * Tests for Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -217,31 +217,35 @@ namespace Test
         const ::SimdConvolutionActivationType a0 = ::SimdConvolutionActivationPrelu, a1 = ::SimdConvolutionActivationRelu, a2 = ::SimdConvolutionActivationHswish;
 #ifdef NDEBUG
 #if 0
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 3, 384, 384, 3, 2, a0, 32, 3, 1, a1, 16, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 16, 192, 192, 1, 1, a0, 96, 3, 2, a1, 24, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 24, 96, 96, 1, 1, a0, 144, 3, 1, a1, 24, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 24, 96, 96, 1, 1, a0, 144, 3, 2, a1, 32, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 32, 48, 48, 1, 1, a0, 192, 3, 1, a1, 32, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 3, 384, 389, 3, 2, a0, 32, 3, 1, a1, 16, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 16, 192, 199, 1, 1, a0, 96, 3, 2, a1, 24, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 24, 96, 99, 1, 1, a0, 144, 3, 1, a1, 24, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 24, 96, 98, 1, 1, a0, 144, 3, 2, a1, 32, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 32, 48, 49, 1, 1, a0, 192, 3, 1, a1, 32, a2, f), f1, f2);
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 32, 48, 48, 1, 1, a0, 192, 3, 2, a1, 64, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 64, 24, 24, 1, 1, a0, 384, 3, 1, a1, 64, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 64, 24, 24, 1, 1, a0, 384, 3, 1, a1, 96, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 64, 24, 26, 1, 1, a0, 384, 3, 1, a1, 64, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 64, 24, 25, 1, 1, a0, 384, 3, 1, a1, 96, a2, f), f1, f2);
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 96, 24, 24, 1, 1, a0, 576, 3, 1, a1, 96, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 160, 12, 12, 1, 1, a0, 960, 3, 1, a1, 320, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 160, 12, 12, 1, 1, a0, 960, 3, 1, a1, 160, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 160, 12, 16, 1, 1, a0, 960, 3, 1, a1, 320, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 160, 12, 15, 1, 1, a0, 960, 3, 1, a1, 160, a2, f), f1, f2);
 #endif
 #if 0
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 3, 384, 384, 3, 2, a0, 35, 3, 1, a1, 17, a2, f), f1, f2);
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 17, 192, 192, 1, 1, a0, 99, 3, 2, a1, 27, a2, f), f1, f2);
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 27, 96, 96, 1, 1, a0, 147, 3, 1, a1, 27, a2, f), f1, f2);
 #endif
-#if 1
+#if 0
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 34, 32, 32, 1, 1, a0, 34, 3, 1, a1, 34, a2, f), f1, f2);
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 34, 32, 32, 1, 1, a0, 34, 5, 1, a1, 34, a2, f), f1, f2);
         result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 34, 32, 32, 1, 1, a0, 34, 7, 1, a1, 34, a2, f), f1, f2);
 #endif
+#if 1
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 3, 320, 320, 3, 2, a0, 16, 3, 1, a1, 8, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 8, 160, 160, 1, 1, a0, 48, 3, 2, a1, 8, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 8, 80, 80, 1, 1, a0, 48, 3, 1, a1, 8, a2, f), f1, f2);
+#endif
 #else
-        //result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 34, 32, 32, 1, 1, a0, 34, 3, 1, a1, 34, a2, f), f1, f2);
-        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 34, 32, 32, 1, 1, a0, 34, 5, 1, a1, 34, a2, f), f1, f2);
+        result = result && SynetMergedConvolution32fForwardAutoTest(eps, Param(1, 8, 80, 80, 1, 1, a0, 48, 3, 1, a1, 8, a2, f), f1, f2);
 #endif
         return result;
     }

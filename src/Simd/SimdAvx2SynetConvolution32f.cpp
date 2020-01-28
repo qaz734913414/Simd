@@ -194,14 +194,8 @@ namespace Simd
         SynetConvolution32fGemmNT::SynetConvolution32fGemmNT(const ConvParam32f & p)
             : Avx::SynetConvolution32fGemmNT(p)
         {
-        }
-
-        void SynetConvolution32fGemmNT::GemmAndBias(const float * src, float * dst)
-        {
-            const ConvParam32f & p = _param;
-            for (size_t g = 0; g < p.group; ++g)
-                Avx2::Gemm32fNT(_M, _N, _K, &_1, _weight + _weightStep * g, _K, src + _srcStep * g, _K, &_0, dst + _dstStep * g, _N);
-            Avx2::ConvolutionBiasAndActivation(_bias, p.dstC, p.dstH*p.dstW, _param.activation, _params, ::SimdFalse, dst);
+            _gemm.Init(InitGemmFuncs(Avx2::Gemm32fNT, "Avx2"));
+            _biasAndActivation = Avx::ConvolutionBiasAndActivation;
         }
 
         //---------------------------------------------------------------------
@@ -209,32 +203,67 @@ namespace Simd
         SynetConvolution32fWinograd::SynetConvolution32fWinograd(const ConvParam32f & p)
             : Avx::SynetConvolution32fWinograd(p)
         {
-            if (p.trans && p.srcH >= 8 && p.srcW >= 8 && p.srcH*p.srcW*p.batch >= 256)
-                SetBlock(4);
-            else if (p.trans && p.srcH >= 6 && p.srcW >= 6 && p.srcH*p.srcW*p.batch >= 144 && p.dstH % 3 == 0 && p.dstW % 3 == 0)
-                SetBlock(3);
-            else
-                SetBlock(2);
-            switch (_block)
+            if (p.kernelY == 1 && p.kernelX == 3)
             {
-            case 2:
-                _setFilter = Avx::Winograd2x3SetFilter;
-                _setInput = Avx::Winograd2x3SetInput;
-                _setOutput = Avx::Winograd2x3SetOutput;
-                break;
-            case 3:
-                _setFilter = Avx::Winograd3x3SetFilter;
-                _setInput = Avx::Winograd3x3SetInput;
-                _setOutput = Avx::Winograd3x3SetOutput;
-                break;
-            case 4:
-                _setFilter = Avx::Winograd4x3SetFilter;
-                _setInput = Avx::Winograd4x3SetInput;
-                _setOutput = Avx::Winograd4x3SetOutput;
-                break;
-            default:
-                assert(0);
+                {
+                    SetBlock(1, 4);
+                    _setFilter = Avx::WinogradKernel1x3Block1x4SetFilter;
+                    _setInput = Avx::WinogradKernel1x3Block1x4SetInput;
+                    _setOutput = Avx::WinogradKernel1x3Block1x4SetOutput;
+                }
             }
+            else if (p.kernelY == 1 && p.kernelX == 5)
+            {
+                {
+                    SetBlock(1, 4);
+                    _setFilter = Avx::WinogradKernel1x5Block1x4SetFilter;
+                    _setInput = Avx::WinogradKernel1x5Block1x4SetInput;
+                    _setOutput = Avx::WinogradKernel1x5Block1x4SetOutput;
+                }
+            }
+            else if (p.kernelY == 2 && p.kernelX == 2)
+            {
+                if (p.trans && p.srcH >= 8 && p.srcW >= 8 && p.srcH * p.srcW * p.batch >= 256)
+                {
+                    SetBlock(4, 4);
+                    _setFilter = Avx::WinogradKernel2x2Block4x4SetFilter;
+                    _setInput = Avx::WinogradKernel2x2Block4x4SetInput;
+                    _setOutput = Avx::WinogradKernel2x2Block4x4SetOutput;
+                }
+                else
+                {
+                    SetBlock(2, 2);
+                    _setFilter = Avx::WinogradKernel2x2Block2x2SetFilter;
+                    _setInput = Avx::WinogradKernel2x2Block2x2SetInput;
+                    _setOutput = Avx::WinogradKernel2x2Block2x2SetOutput;
+                }
+            }
+            else if (p.kernelY == 3 && p.kernelX == 3)
+            {
+                if (p.trans && p.srcH >= 8 && p.srcW >= 8 && p.srcH * p.srcW * p.batch >= 256)
+                {
+                    SetBlock(4, 4);
+                    _setFilter = Avx::WinogradKernel3x3Block4x4SetFilter;
+                    _setInput = Avx::WinogradKernel3x3Block4x4SetInput;
+                    _setOutput = Avx::WinogradKernel3x3Block4x4SetOutput;
+                }
+                else if (p.trans && p.srcH >= 6 && p.srcW >= 6 && p.srcH * p.srcW * p.batch >= 144 && p.dstH % 3 == 0 && p.dstW % 3 == 0)
+                {
+                    SetBlock(3, 3);
+                    _setFilter = Avx::WinogradKernel3x3Block3x3SetFilter;
+                    _setInput = Avx::WinogradKernel3x3Block3x3SetInput;
+                    _setOutput = Avx::WinogradKernel3x3Block3x3SetOutput;
+                }
+                else
+                {
+                    SetBlock(2, 2);
+                    _setFilter = Avx::WinogradKernel3x3Block2x2SetFilter;
+                    _setInput = Avx::WinogradKernel3x3Block2x2SetInput;
+                    _setOutput = Avx::WinogradKernel3x3Block2x2SetOutput;
+                }
+            }
+            else
+                assert(0);
             _gemm.Init(InitGemmFuncs(Avx2::Gemm32fNN, "Avx2", p.gemm, "Ext"));
             if (_param.trans)
             {

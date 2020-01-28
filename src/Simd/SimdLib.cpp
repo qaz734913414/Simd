@@ -3342,14 +3342,6 @@ SIMD_API void SimdNeuralAddValue(const float * value, float * dst, size_t size)
     simdNeuralAddValue(value, dst, size);
 }
 
-typedef void(*SimdNeuralSigmoidPtr) (const float * src, size_t size, const float * slope, float * dst);
-SimdNeuralSigmoidPtr simdNeuralSigmoid = SIMD_FUNC4(NeuralSigmoid, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_SSE2_FUNC, SIMD_NEON_FUNC);
-
-SIMD_API void SimdNeuralSigmoid(const float * src, size_t size, const float * slope, float * dst)
-{
-    simdNeuralSigmoid(src, size, slope, dst);
-}
-
 typedef void(*SimdNeuralRoughSigmoidPtr) (const float * src, size_t size, const float * slope, float * dst);
 SimdNeuralRoughSigmoidPtr simdNeuralRoughSigmoid = SIMD_FUNC5(NeuralRoughSigmoid, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_VSX_FUNC, SIMD_NEON_FUNC);
 
@@ -3374,14 +3366,6 @@ SIMD_API void SimdNeuralDerivativeSigmoid(const float * src, size_t size, const 
     simdNeuralDerivativeSigmoid(src, size, slope, dst);
 }
 
-typedef void(*SimdNeuralTanhPtr) (const float * src, size_t size, const float * slope, float * dst);
-SimdNeuralTanhPtr simdNeuralTanh = SIMD_FUNC4(NeuralTanh, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_SSE2_FUNC, SIMD_NEON_FUNC);
-
-SIMD_API void SimdNeuralTanh(const float * src, size_t size, const float * slope, float * dst)
-{
-    simdNeuralTanh(src, size, slope, dst);
-}
-
 typedef void(*SimdNeuralRoughTanhPtr) (const float * src, size_t size, const float * slope, float * dst);
 SimdNeuralRoughTanhPtr simdNeuralRoughTanh = SIMD_FUNC4(NeuralRoughTanh, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
@@ -3396,14 +3380,6 @@ SimdNeuralDerivativeTanhPtr simdNeuralDerivativeTanh = SIMD_FUNC4(NeuralDerivati
 SIMD_API void SimdNeuralDerivativeTanh(const float * src, size_t size, const float * slope, float * dst)
 {
     simdNeuralDerivativeTanh(src, size, slope, dst);
-}
-
-typedef void(*SimdNeuralReluPtr) (const float * src, size_t size, const float * slope, float * dst);
-SimdNeuralReluPtr simdNeuralRelu = SIMD_FUNC4(NeuralRelu, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
-
-SIMD_API void SimdNeuralRelu(const float * src, size_t size, const float * slope, float * dst)
-{
-    simdNeuralRelu(src, size, slope, dst);
 }
 
 typedef void(*SimdNeuralDerivativeReluPtr) (const float * src, size_t size, const float * slope, float * dst);
@@ -5440,10 +5416,19 @@ SIMD_API void SimdSynetMergedConvolution32fForward(void * context, const float *
     c->Forward(src, buf, dst);
 }
 
-typedef void(*SimdSynetPoolingForwardPtr) (const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-    size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans);
+typedef void(*SimdSynetPoolingForwardAveragePtr) (const float* src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+    size_t strideY, size_t strideX, size_t padY, size_t padX, float* dst, size_t dstH, size_t dstW, SimdBool exludePad, SimdTensorFormatType format);
+volatile SimdSynetPoolingForwardAveragePtr simdSynetPoolingForwardAverage = SIMD_FUNC4(SynetPoolingForwardAverage, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-volatile SimdSynetPoolingForwardPtr simdSynetPoolingForwardMax = SIMD_FUNC5(SynetPoolingForwardMax, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+void SimdSynetPoolingForwardAverage(const float* src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+    size_t strideY, size_t strideX, size_t padY, size_t padX, float* dst, size_t dstH, size_t dstW, SimdBool excludePad, SimdTensorFormatType format)
+{
+    simdSynetPoolingForwardAverage(src, srcC, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dst, dstH, dstW, excludePad, format);
+}
+
+typedef void(*SimdSynetPoolingForwardMaxPtr) (const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
+    size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans);
+volatile SimdSynetPoolingForwardMaxPtr simdSynetPoolingForwardMax = SIMD_FUNC5(SynetPoolingForwardMax, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
 SIMD_API void SimdSynetPoolingForwardMax(const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
     size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans)
@@ -5457,6 +5442,14 @@ volatile SimdSynetPreluLayerForwardPtr simdSynetPreluLayerForward = SIMD_FUNC4(S
 SIMD_API void SimdSynetPreluLayerForward(const float * src, const float * slope, size_t channels, size_t spatial, float * dst, SimdTensorFormatType format)
 {
     simdSynetPreluLayerForward(src, slope, channels, spatial, dst, format);
+}
+
+typedef void(*SimdSynetRelu32fPtr) (const float* src, size_t size, const float* slope, float* dst);
+SimdSynetRelu32fPtr simdSynetRelu32f = SIMD_FUNC4(SynetRelu32f, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdSynetRelu32f(const float* src, size_t size, const float* slope, float* dst)
+{
+    simdSynetRelu32f(src, size, slope, dst);
 }
 
 typedef void(*SimdSynetRestrictRange32fPtr) (const float * src, size_t size, const float * lower, const float * upper, float * dst);
@@ -5509,6 +5502,14 @@ SIMD_API void SimdSynetShuffleLayerForward(const float* src0, size_t srcC0, cons
     simdSynetShuffleLayerForward(src0, srcC0, src1, srcC1, spatial, dst0, dst1, dstC, format);
 }
 
+typedef void(*SimdSynetSigmoid32fPtr) (const float* src, size_t size, const float* slope, float* dst);
+SimdSynetSigmoid32fPtr simdSynetSigmoid32f = SIMD_FUNC4(SynetSigmoid32f, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_SSE2_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdSynetSigmoid32f(const float* src, size_t size, const float* slope, float* dst)
+{
+    simdSynetSigmoid32f(src, size, slope, dst);
+}
+
 typedef void(*SimdSynetSoftmaxLayerForwardPtr) (const float * src, size_t outer, size_t count, size_t inner, float * dst);
 volatile SimdSynetSoftmaxLayerForwardPtr simdSynetSoftmaxLayerForward = SIMD_FUNC4(SynetSoftmaxLayerForward, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_SSE2_FUNC, SIMD_NEON_FUNC);
 
@@ -5517,14 +5518,39 @@ SIMD_API void SimdSynetSoftmaxLayerForward(const float * src, size_t outer, size
     simdSynetSoftmaxLayerForward(src, outer, count, inner, dst);
 }
 
+typedef void(*SimdSynetSoftplus32fPtr) (const float* src, size_t size, const float* beta, const float* threshold, float* dst);
+volatile SimdSynetSoftplus32fPtr simdSynetSoftplus32f = SIMD_FUNC4(SynetSoftplus32f, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_SSE2_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdSynetSoftplus32f(const float* src, size_t size, const float* beta, const float* threshold, float* dst)
+{
+    simdSynetSoftplus32f(src, size, beta, threshold, dst);
+}
+
 SIMD_API SimdTensorFormatType SimdSynetSpecifyTensorFormat(SimdTensorFormatType format)
 {
     return Base::SynetSpecifyTensorFormat(format);
 }
 
+typedef void(*SimdSynetTanh32fPtr) (const float* src, size_t size, const float* slope, float* dst);
+SimdSynetTanh32fPtr simdSynetTanh32f = SIMD_FUNC4(SynetTanh32f, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_SSE2_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdSynetTanh32f(const float* src, size_t size, const float* slope, float* dst)
+{
+    simdSynetTanh32f(src, size, slope, dst);
+}
+
+
 SIMD_API size_t SimdSynetTensorAlignment(SimdTensorFormatType format)
 {
     return Base::SynetTensorAlignment(format);
+}
+
+typedef void(*SimdSynetUnaryOperation32fLayerForwardPtr) (const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst);
+volatile SimdSynetUnaryOperation32fLayerForwardPtr simdSynetUnaryOperation32fLayerForward = SIMD_FUNC4(SynetUnaryOperation32fLayerForward, SIMD_AVX512F_FUNC, SIMD_AVX2_FUNC, SIMD_SSE2_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdSynetUnaryOperation32fLayerForward(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst)
+{
+    simdSynetUnaryOperation32fLayerForward(src, size, type, dst);
 }
 
 SIMD_API void SimdTextureBoostedSaturatedGradient(const uint8_t * src, size_t srcStride, size_t width, size_t height,
@@ -5672,70 +5698,161 @@ SIMD_API void SimdTransformImage(const uint8_t * src, size_t srcStride, size_t w
 }
 
 typedef void(*SimdWinogradSetFilterPtr) (const float * src, size_t size, float * dst, SimdBool trans);
-typedef void(*SimdWinogradSetInputPtr) (const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, SimdBool pad, SimdBool trans);
+typedef void(*SimdWinogradSetInputPtr) (const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth, size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans);
 typedef void(*SimdWinogradSetOutputPtr) (const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans);
 
-volatile SimdWinogradSetFilterPtr simdWinograd2x3SetFilter = SIMD_FUNC4(Winograd2x3SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetFilterPtr simdWinogradKernel1x3Block1x4SetFilter = SIMD_FUNC4(WinogradKernel1x3Block1x4SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd2x3SetFilter(const float * src, size_t size, float * dst, SimdBool trans)
+SIMD_API void SimdWinogradKernel1x3Block1x4SetFilter(const float* src, size_t size, float* dst, SimdBool trans)
 {
-    simdWinograd2x3SetFilter(src, size, dst, trans);
+    simdWinogradKernel1x3Block1x4SetFilter(src, size, dst, trans);
 }
 
-volatile SimdWinogradSetInputPtr simdWinograd2x3SetInput = SIMD_FUNC4(Winograd2x3SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetInputPtr simdWinogradKernel1x3Block1x4SetInput = SIMD_FUNC4(WinogradKernel1x3Block1x4SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd2x3SetInput(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, SimdBool pad, SimdBool trans)
+SIMD_API void SimdWinogradKernel1x3Block1x4SetInput(const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth,
+    size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans)
 {
-    simdWinograd2x3SetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad, trans);
+    simdWinogradKernel1x3Block1x4SetInput(src, srcChannels, srcHeight, srcWidth, padY, padX, padH, padW, dst, dstStride, trans);
 }
 
-volatile SimdWinogradSetOutputPtr simdWinograd2x3SetOutput = SIMD_FUNC4(Winograd2x3SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetOutputPtr simdWinogradKernel1x3Block1x4SetOutput = SIMD_FUNC4(WinogradKernel1x3Block1x4SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd2x3SetOutput(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
+SIMD_API void SimdWinogradKernel1x3Block1x4SetOutput(const float* src, size_t srcStride, float* dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
 {
-    simdWinograd2x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
+    simdWinogradKernel1x3Block1x4SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
 }
 
-volatile SimdWinogradSetFilterPtr simdWinograd3x3SetFilter = SIMD_FUNC4(Winograd3x3SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetFilterPtr simdWinogradKernel1x5Block1x4SetFilter = SIMD_FUNC4(WinogradKernel1x5Block1x4SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd3x3SetFilter(const float * src, size_t size, float * dst, SimdBool trans)
+SIMD_API void SimdWinogradKernel1x5Block1x4SetFilter(const float* src, size_t size, float* dst, SimdBool trans)
 {
-    simdWinograd3x3SetFilter(src, size, dst, trans);
+    simdWinogradKernel1x5Block1x4SetFilter(src, size, dst, trans);
 }
 
-volatile SimdWinogradSetInputPtr simdWinograd3x3SetInput = SIMD_FUNC4(Winograd3x3SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC); 
+volatile SimdWinogradSetInputPtr simdWinogradKernel1x5Block1x4SetInput = SIMD_FUNC4(WinogradKernel1x5Block1x4SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd3x3SetInput(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, SimdBool pad, SimdBool trans)
+SIMD_API void SimdWinogradKernel1x5Block1x4SetInput(const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth,
+    size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans)
 {
-    simdWinograd3x3SetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad, trans);
+    simdWinogradKernel1x5Block1x4SetInput(src, srcChannels, srcHeight, srcWidth, padY, padX, padH, padW, dst, dstStride, trans);
 }
 
-volatile SimdWinogradSetOutputPtr simdWinograd3x3SetOutput = SIMD_FUNC4(Winograd3x3SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetOutputPtr simdWinogradKernel1x5Block1x4SetOutput = SIMD_FUNC4(WinogradKernel1x5Block1x4SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd3x3SetOutput(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
+SIMD_API void SimdWinogradKernel1x5Block1x4SetOutput(const float* src, size_t srcStride, float* dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
 {
-    simdWinograd3x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
+    simdWinogradKernel1x5Block1x4SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
 }
 
-volatile SimdWinogradSetFilterPtr simdWinograd4x3SetFilter = SIMD_FUNC4(Winograd4x3SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetFilterPtr simdWinogradKernel2x2Block2x2SetFilter = SIMD_FUNC4(WinogradKernel2x2Block2x2SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd4x3SetFilter(const float * src, size_t size, float * dst, SimdBool trans)
+SIMD_API void SimdWinogradKernel2x2Block2x2SetFilter(const float* src, size_t size, float* dst, SimdBool trans)
 {
-    simdWinograd4x3SetFilter(src, size, dst, trans);
+    simdWinogradKernel2x2Block2x2SetFilter(src, size, dst, trans);
 }
 
-volatile SimdWinogradSetInputPtr simdWinograd4x3SetInput = SIMD_FUNC4(Winograd4x3SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetInputPtr simdWinogradKernel2x2Block2x2SetInput = SIMD_FUNC4(WinogradKernel2x2Block2x2SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd4x3SetInput(const float * src, size_t srcChannels, size_t srcHeight, size_t srcWidth, float * dst, size_t dstStride, SimdBool pad, SimdBool trans)
+SIMD_API void SimdWinogradKernel2x2Block2x2SetInput(const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth,
+    size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans)
 {
-    simdWinograd4x3SetInput(src, srcChannels, srcHeight, srcWidth, dst, dstStride, pad, trans);
+    simdWinogradKernel2x2Block2x2SetInput(src, srcChannels, srcHeight, srcWidth, padY, padX, padH, padW, dst, dstStride, trans);
 }
 
-volatile SimdWinogradSetOutputPtr simdWinograd4x3SetOutput = SIMD_FUNC4(Winograd4x3SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+volatile SimdWinogradSetOutputPtr simdWinogradKernel2x2Block2x2SetOutput = SIMD_FUNC4(WinogradKernel2x2Block2x2SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
 
-SIMD_API void SimdWinograd4x3SetOutput(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
+SIMD_API void SimdWinogradKernel2x2Block2x2SetOutput(const float* src, size_t srcStride, float* dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
 {
-    simdWinograd4x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
+    simdWinogradKernel2x2Block2x2SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
+}
+
+volatile SimdWinogradSetFilterPtr simdWinogradKernel2x2Block4x4SetFilter = SIMD_FUNC4(WinogradKernel2x2Block4x4SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel2x2Block4x4SetFilter(const float* src, size_t size, float* dst, SimdBool trans)
+{
+    simdWinogradKernel2x2Block4x4SetFilter(src, size, dst, trans);
+}
+
+volatile SimdWinogradSetInputPtr simdWinogradKernel2x2Block4x4SetInput = SIMD_FUNC4(WinogradKernel2x2Block4x4SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel2x2Block4x4SetInput(const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth,
+    size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans)
+{
+    simdWinogradKernel2x2Block4x4SetInput(src, srcChannels, srcHeight, srcWidth, padY, padX, padH, padW, dst, dstStride, trans);
+}
+
+volatile SimdWinogradSetOutputPtr simdWinogradKernel2x2Block4x4SetOutput = SIMD_FUNC4(WinogradKernel2x2Block4x4SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel2x2Block4x4SetOutput(const float* src, size_t srcStride, float* dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
+{
+    simdWinogradKernel2x2Block4x4SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
+}
+
+volatile SimdWinogradSetFilterPtr simdWinogradKernel3x3Block2x2SetFilter = SIMD_FUNC4(WinogradKernel3x3Block2x2SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block2x2SetFilter(const float * src, size_t size, float * dst, SimdBool trans)
+{
+    simdWinogradKernel3x3Block2x2SetFilter(src, size, dst, trans);
+}
+
+volatile SimdWinogradSetInputPtr simdWinogradKernel3x3Block2x2SetInput = SIMD_FUNC4(WinogradKernel3x3Block2x2SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block2x2SetInput(const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth,
+    size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans)
+{
+    simdWinogradKernel3x3Block2x2SetInput(src, srcChannels, srcHeight, srcWidth, padY, padX, padH, padW, dst, dstStride, trans);
+}
+
+volatile SimdWinogradSetOutputPtr simdWinogradKernel3x3Block2x2SetOutput = SIMD_FUNC4(WinogradKernel3x3Block2x2SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block2x2SetOutput(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
+{
+    simdWinogradKernel3x3Block2x2SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
+}
+
+volatile SimdWinogradSetFilterPtr simdWinogradKernel3x3Block3x3SetFilter = SIMD_FUNC4(WinogradKernel3x3Block3x3SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block3x3SetFilter(const float * src, size_t size, float * dst, SimdBool trans)
+{
+    simdWinogradKernel3x3Block3x3SetFilter(src, size, dst, trans);
+}
+
+volatile SimdWinogradSetInputPtr simdWinogradKernel3x3Block3x3SetInput = SIMD_FUNC4(WinogradKernel3x3Block3x3SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC); 
+
+SIMD_API void SimdWinogradKernel3x3Block3x3SetInput(const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth,
+    size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans)
+{
+    simdWinogradKernel3x3Block3x3SetInput(src, srcChannels, srcHeight, srcWidth, padY, padX, padH, padW, dst, dstStride, trans);
+}
+
+volatile SimdWinogradSetOutputPtr simdWinogradKernel3x3Block3x3SetOutput = SIMD_FUNC4(WinogradKernel3x3Block3x3SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block3x3SetOutput(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
+{
+    simdWinogradKernel3x3Block3x3SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
+}
+
+volatile SimdWinogradSetFilterPtr simdWinogradKernel3x3Block4x4SetFilter = SIMD_FUNC4(WinogradKernel3x3Block4x4SetFilter, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block4x4SetFilter(const float * src, size_t size, float * dst, SimdBool trans)
+{
+    simdWinogradKernel3x3Block4x4SetFilter(src, size, dst, trans);
+}
+
+volatile SimdWinogradSetInputPtr simdWinogradKernel3x3Block4x4SetInput = SIMD_FUNC4(WinogradKernel3x3Block4x4SetInput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block4x4SetInput(const float* src, size_t srcChannels, size_t srcHeight, size_t srcWidth,
+    size_t padY, size_t padX, size_t padH, size_t padW, float* dst, size_t dstStride, SimdBool trans)
+{
+    simdWinogradKernel3x3Block4x4SetInput(src, srcChannels, srcHeight, srcWidth, padY, padX, padH, padW, dst, dstStride, trans);
+}
+
+volatile SimdWinogradSetOutputPtr simdWinogradKernel3x3Block4x4SetOutput = SIMD_FUNC4(WinogradKernel3x3Block4x4SetOutput, SIMD_AVX512F_FUNC, SIMD_AVX_FUNC, SIMD_SSE_FUNC, SIMD_NEON_FUNC);
+
+SIMD_API void SimdWinogradKernel3x3Block4x4SetOutput(const float * src, size_t srcStride, float * dst, size_t dstChannels, size_t dstHeight, size_t dstWidth, SimdBool trans)
+{
+    simdWinogradKernel3x3Block4x4SetOutput(src, srcStride, dst, dstChannels, dstHeight, dstWidth, trans);
 }
 
 SIMD_API void SimdYuva420pToBgra(const uint8_t * y, size_t yStride, const uint8_t * u, size_t uStride, const uint8_t * v, size_t vStride,

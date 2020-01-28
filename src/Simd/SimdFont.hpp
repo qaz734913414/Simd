@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ namespace Simd
         /*!
             Creates a new Font class with given height.
 
-            \note The font is generated on the base of the generic monospace font from Gdiplus.
+            \note The font supports ASCII characters only. It was generated on the base of the generic monospace font from Gdiplus.
 
             \param [in] height - initial height value. By default it is equal to 16.
         */

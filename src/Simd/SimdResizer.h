@@ -1,7 +1,7 @@
 /*
 * Simd Library (http://ermig1979.github.io/Simd).
 *
-* Copyright (c) 2011-2019 Yermalayeu Ihar.
+* Copyright (c) 2011-2020 Yermalayeu Ihar.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +45,22 @@ namespace Simd
             this->dstH = dstH;
             this->channels = channels;
             this->align = align;
+        }
+
+        bool IsByteBilinear() const
+        {
+            return type == SimdResizeChannelByte && method == SimdResizeMethodBilinear;
+        }
+
+        bool IsByteArea() const
+        {
+            return type == SimdResizeChannelByte && method == SimdResizeMethodArea;
+        }
+
+        bool IsFloatBilinear() const
+        {
+            return type == SimdResizeChannelFloat && 
+                (method == SimdResizeMethodBilinear || method == SimdResizeMethodCaffeInterp || method == SimdResizeMethodInferenceEngineInterp);
         }
     };
 
@@ -100,7 +116,7 @@ namespace Simd
             Array32i _ix, _iy;
             Array32f _ax, _ay, _bx[2];
 
-            void EstimateIndexAlpha(size_t srcSize, size_t dstSize, size_t channels, bool caffeInterp, int32_t * indices, float * alphas);
+            void EstimateIndexAlpha(size_t srcSize, size_t dstSize, size_t channels, int32_t * indices, float * alphas);
 
             virtual void Run(const float * src, size_t srcStride, float * dst, size_t dstStride);
 

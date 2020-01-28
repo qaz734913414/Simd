@@ -444,247 +444,6 @@ namespace Test
 
     namespace
     {
-        struct ParamP
-        {
-            size_t srcC, srcH, srcW, kernelY, kernelX, strideY, strideX, padY, padX, dstH, dstW;
-            SimdBool trans, ceil;
-
-            ParamP(size_t sC, size_t sH, size_t sW, Size k, Size s, Size b, Size e, ::SimdBool t, ::SimdBool c)
-                : srcC(sC), srcH(sH), srcW(sW), kernelY(k.y), kernelX(k.x), strideY(s.y), strideX(s.x)
-                , padY(b.y), padX(b.x), trans(t), ceil(c)
-            {
-                if (ceil)
-                {
-                    dstH = (size_t)(::ceil((float)(srcH + b.y + e.y - kernelY) / strideY)) + 1;
-                    dstW = (size_t)(::ceil((float)(srcW + b.x + e.x - kernelX) / strideX)) + 1;
-                }
-                else
-                {
-                    dstH = (size_t)(::floor((float)(srcH + b.y + e.y - kernelY) / strideY)) + 1;
-                    dstW = (size_t)(::floor((float)(srcW + b.x + e.x - kernelX) / strideX)) + 1;
-                }
-            }
-        };        
-            
-        struct FuncP
-        {
-            typedef void(*FuncPtr)(const float * src, size_t srcC, size_t srcH, size_t srcW, size_t kernelY, size_t kernelX,
-                size_t strideY, size_t strideX, size_t padY, size_t padX, float * dst, size_t dstH, size_t dstW, SimdBool trans);
-
-            FuncPtr func;
-            String desc;
-
-            FuncP(const FuncPtr & f, const String & d) : func(f), desc(d) {}
-
-            void Update(const ParamP & p)
-            {
-                std::stringstream ss;
-                ss << desc;
-                ss << "[" << p.srcC << "x" << p.srcH << "x" << p.srcW;
-                ss << "-" << p.kernelY << "x" << p.kernelX;
-                ss << "-" << p.strideX << "-" << Simd::Max(p.padX, p.padY) << "-" << p.trans;
-                ss << "]";
-                desc = ss.str();
-            }
-
-            void Call(const ParamP & p, const Tensor32f & src, Tensor32f & dst) const
-            {
-                TEST_PERFORMANCE_TEST(desc);
-                func(src.Data(), p.srcC, p.srcH, p.srcW, p.kernelY, p.kernelX, p.strideY, p.strideX, p.padY, p.padX, dst.Data(), p.dstH, p.dstW, p.trans);
-            }
-        };
-    }
-
-#define FUNC_P(function) FuncP(function, #function)
-
-    bool SynetPoolingForwardAutoTest(const ParamP & p, FuncP f1, FuncP f2)
-    {
-        bool result = true;
-
-        f1.Update(p);
-        f2.Update(p);
-
-        TEST_LOG_SS(Info, "Test " << f1.desc << " & " << f2.desc << "].");
-
-        Tensor32f src({ p.trans ? p.srcH : p.srcC, p.trans ? p.srcW : p.srcH, p.trans ? p.srcC : p.srcW });
-        FillRandom(src.Data(), src.Size(), -1.0, 1.0f);
-
-        Tensor32f dst1({ p.trans ? p.dstH : p.srcC, p.trans ? p.dstW : p.dstH, p.trans ? p.srcC : p.dstW });
-        Tensor32f dst2({ p.trans ? p.dstH : p.srcC, p.trans ? p.dstW : p.dstH, p.trans ? p.srcC : p.dstW });
-
-        TEST_ALIGN(SIMD_ALIGN);
-
-        TEST_EXECUTE_AT_LEAST_MIN_TIME(f1.Call(p, src, dst1));
-
-        TEST_EXECUTE_AT_LEAST_MIN_TIME(f2.Call(p, src, dst2));
-
-        result = result && Compare(dst1, dst2, EPS, true, 64, DifferenceAbsolute);
-
-        return result;
-    }
-
-    bool SynetPoolingForwardMaxAutoTest(::SimdBool t, ::SimdBool c, const FuncP & f1, const FuncP & f2)
-    {
-        bool result = true;
-
-        Size _0(0, 0), _1(1, 1), _2(2, 2), _3(3, 3);
-
-        result = result && SynetPoolingForwardAutoTest(ParamP(10, 238, 133, _2, _2, _0, _0,  t, c), f1, f2);
-        result = result && SynetPoolingForwardAutoTest(ParamP(32, 99, 99, _3, _1, _1, _1, t, c), f1, f2);
-        result = result && SynetPoolingForwardAutoTest(ParamP(28, 22, 22, _3, _2, _0, _1, t, c), f1, f2);
-        result = result && SynetPoolingForwardAutoTest(ParamP(32, 46, 46, _3, _2, _0, _1, t, c), f1, f2);
-        result = result && SynetPoolingForwardAutoTest(ParamP(64, 21, 21, _3, _2, _1, _1, t, c), f1, f2);
-        result = result && SynetPoolingForwardAutoTest(ParamP(48, 9, 9, _2, _2, _1, _1, t, c), f1, f2);
-        result = result && SynetPoolingForwardAutoTest(ParamP(64, 8, 8, _2, _2, _0, _0, t, c), f1, f2);
-        result = result && SynetPoolingForwardAutoTest(ParamP(24, 56, 48, _2, _2, _0, _0, t, c), f1, f2);
-
-        return result;
-    }
-
-    bool SynetPoolingForwardMaxAutoTest(const FuncP & f1, const FuncP & f2)
-    {
-        bool result = true;
-
-        result = result && SynetPoolingForwardMaxAutoTest(::SimdFalse, ::SimdTrue, f1, f2);
-        result = result && SynetPoolingForwardMaxAutoTest(::SimdTrue, ::SimdTrue, f1, f2);
-
-        return result;
-    }
-
-    bool SynetPoolingForwardMaxAutoTest()
-    {
-        bool result = true;
-
-        result = result && SynetPoolingForwardMaxAutoTest(FUNC_P(Simd::Base::SynetPoolingForwardMax), FUNC_P(SimdSynetPoolingForwardMax));
-
-#ifdef SIMD_SSE_ENABLE
-        if (Simd::Sse::Enable)
-            result = result && SynetPoolingForwardMaxAutoTest(FUNC_P(Simd::Sse::SynetPoolingForwardMax), FUNC_P(SimdSynetPoolingForwardMax));
-#endif 
-
-#ifdef SIMD_AVX_ENABLE
-        if (Simd::Avx::Enable)
-            result = result && SynetPoolingForwardMaxAutoTest(FUNC_P(Simd::Avx::SynetPoolingForwardMax), FUNC_P(SimdSynetPoolingForwardMax));
-#endif 
-
-#ifdef SIMD_AVX2_ENABLE
-        if (Simd::Avx2::Enable)
-            result = result && SynetPoolingForwardMaxAutoTest(FUNC_P(Simd::Avx2::SynetPoolingForwardMax), FUNC_P(SimdSynetPoolingForwardMax));
-#endif 
-
-#ifdef SIMD_AVX512F_ENABLE
-        if (Simd::Avx512f::Enable)
-            result = result && SynetPoolingForwardMaxAutoTest(FUNC_P(Simd::Avx512f::SynetPoolingForwardMax), FUNC_P(SimdSynetPoolingForwardMax));
-#endif
-
-#ifdef SIMD_NEON_ENABLE
-        if (Simd::Neon::Enable)
-            result = result && SynetPoolingForwardMaxAutoTest(FUNC_P(Simd::Neon::SynetPoolingForwardMax), FUNC_P(SimdSynetPoolingForwardMax));
-#endif 
-
-        return result;
-    }
-
-    namespace
-    {
-        struct FuncPLF
-        {
-            typedef void(*FuncPtr)(const float * src, const float * slope, size_t channels, size_t spatial, float * dst, SimdTensorFormatType format);
-
-            FuncPtr func;
-            String desc;
-
-            FuncPLF(const FuncPtr & f, const String & d) : func(f), desc(d) {}
-
-            void Update(SimdTensorFormatType format)
-            {
-                desc = desc + "[" + ToString(format) + "]";
-            }
-
-            void Call(const Tensor32f & src, const Tensor32f & slope, size_t channels, size_t spatial, SimdTensorFormatType format, Tensor32f & dst) const
-            {
-                TEST_PERFORMANCE_TEST(desc);
-                func(src.Data(), slope.Data(), channels, spatial, dst.Data(), format);
-            }
-        };
-    }
-
-#define FUNC_PLF(function) FuncPLF(function, #function)
-
-    bool SynetPreluLayerForwardAutoTest(size_t channels, size_t spatial, SimdTensorFormatType format, FuncPLF f1, FuncPLF f2)
-    {
-        bool result = true;
-
-        f1.Update(format);
-        f2.Update(format);
-
-        TEST_LOG_SS(Info, "Test " << f1.desc << " & " << f2.desc << " [" << channels << ", " << spatial << "].");
-
-        Tensor32f src(ToShape(channels, spatial, format));
-        Tensor32f slope(ToShape(channels, format));
-        Tensor32f dst1(ToShape(channels, spatial, format));
-        Tensor32f dst2(ToShape(channels, spatial, format));
-
-        FillRandom(src.Data(), slope.Size(), -10.0, 10.0);
-
-        TEST_ALIGN(SIMD_ALIGN);
-
-        TEST_EXECUTE_AT_LEAST_MIN_TIME(f1.Call(src, slope, channels, spatial, format, dst1));
-
-        TEST_EXECUTE_AT_LEAST_MIN_TIME(f2.Call(src, slope, channels, spatial, format, dst2));
-
-        result = result && Compare(dst1, dst2, EPS, true, 32, DifferenceBoth);
-
-        return result;
-    }
-
-    bool SynetPreluLayerForwardAutoTest(int mask, const FuncPLF & f1, const FuncPLF & f2)
-    {
-        bool result = true;
-
-        for (SimdTensorFormatType format = SimdTensorFormatNchw; format <= SimdTensorFormatNchw16c && result; format = (SimdTensorFormatType)((int)format + 1))
-        {
-            if (SimdSynetTensorAlignment(format)&mask)
-            {
-                result = result && SynetPreluLayerForwardAutoTest(H, W, format, f1, f2);
-                result = result && SynetPreluLayerForwardAutoTest(H - O, W + O, format, f1, f2);
-            }
-        }
-
-        return result;
-    }
-
-    bool SynetPreluLayerForwardAutoTest()
-    {
-        bool result = true;
-
-        result = result && SynetPreluLayerForwardAutoTest(TFM_ANY, FUNC_PLF(Simd::Base::SynetPreluLayerForward), FUNC_PLF(SimdSynetPreluLayerForward));
-
-#ifdef SIMD_SSE_ENABLE
-        if (Simd::Sse::Enable)
-            result = result && SynetPreluLayerForwardAutoTest(TFM_128, FUNC_PLF(Simd::Sse::SynetPreluLayerForward), FUNC_PLF(SimdSynetPreluLayerForward));
-#endif 
-
-#ifdef SIMD_AVX_ENABLE
-        if (Simd::Avx::Enable)
-            result = result && SynetPreluLayerForwardAutoTest(TFM_256, FUNC_PLF(Simd::Avx::SynetPreluLayerForward), FUNC_PLF(SimdSynetPreluLayerForward));
-#endif 
-
-#ifdef SIMD_AVX512F_ENABLE
-        if (Simd::Avx512f::Enable)
-            result = result && SynetPreluLayerForwardAutoTest(TFM_512, FUNC_PLF(Simd::Avx512f::SynetPreluLayerForward), FUNC_PLF(SimdSynetPreluLayerForward));
-#endif
-
-#ifdef SIMD_NEON_ENABLE
-        if (Simd::Neon::Enable)
-            result = result && SynetPreluLayerForwardAutoTest(TFM_128, FUNC_PLF(Simd::Neon::SynetPreluLayerForward), FUNC_PLF(SimdSynetPreluLayerForward));
-#endif
-
-        return result;
-    }
-
-    namespace
-    {
         struct FuncScLF
         {
             typedef void(*FuncPtr)(const float * src, const float * scale, const float * bias, size_t channels, size_t spatial, float * dst, SimdTensorFormatType format);
@@ -986,6 +745,128 @@ namespace Test
 #ifdef SIMD_NEON_ENABLE
         if (Simd::Neon::Enable)
             result = result && SynetSoftmaxLayerForwardAutoTest(FUNC_SM(Simd::Neon::SynetSoftmaxLayerForward), FUNC_SM(SimdSynetSoftmaxLayerForward));
+#endif 
+
+        return result;
+    }
+
+    SIMD_INLINE String ToString(SimdSynetUnaryOperation32fType type)
+    {
+        switch (type)
+        {
+        case SimdSynetUnaryOperation32fAbs:
+            return "Abs";
+        case SimdSynetUnaryOperation32fExp:
+            return "Exp";
+        case SimdSynetUnaryOperation32fLog:
+            return "Log";
+        case SimdSynetUnaryOperation32fNeg:
+            return "Neg";
+        case SimdSynetUnaryOperation32fRsqrt:
+            return "Rsqrt";
+        case SimdSynetUnaryOperation32fSqrt:
+            return "Sqrt";
+        case SimdSynetUnaryOperation32fTanh:
+            return "Tanh";
+        case SimdSynetUnaryOperation32fZero:
+            return "Zero";
+        }
+        assert(0);
+        return "???";
+    }
+
+    namespace
+    {
+        struct FuncUO
+        {
+            typedef void(*FuncPtr)(const float* src, size_t size, SimdSynetUnaryOperation32fType type, float* dst);
+
+            FuncPtr func;
+            String desc;
+
+            FuncUO(const FuncPtr & f, const String& d) : func(f), desc(d) {}
+
+            void Update(SimdSynetUnaryOperation32fType type)
+            {
+                desc = desc + "[" + ToString(type) + "]";
+            }
+
+            void Call(const Tensor32f& src, SimdSynetUnaryOperation32fType type, Tensor32f& dst) const
+            {
+                TEST_PERFORMANCE_TEST(desc);
+                func(src.Data(), src.Size(), type, dst.Data());
+            }
+        };
+    }
+
+#define FUNC_UO(function) FuncUO(function, #function)
+
+    bool SynetUnaryOperation32fLayerForwardAutoTest(size_t size, SimdSynetUnaryOperation32fType type, FuncUO f1, FuncUO f2)
+    {
+        bool result = true;
+
+        f1.Update(type);
+        f2.Update(type);
+
+        TEST_LOG_SS(Info, "Test " << f1.desc << " & " << f2.desc << ".");
+
+        Tensor32f src({ size });
+        float lo = -10.0, hi = 10.0f;
+        if (type == SimdSynetUnaryOperation32fLog)
+            lo = 0.000000001f;
+        FillRandom(src.Data(), src.Size(), lo, hi);
+
+        Tensor32f dst1({ size });
+        Tensor32f dst2({ size });
+
+        TEST_ALIGN(SIMD_ALIGN);
+
+        TEST_EXECUTE_AT_LEAST_MIN_TIME(f1.Call(src, type, dst1));
+
+        TEST_EXECUTE_AT_LEAST_MIN_TIME(f2.Call(src, type, dst2));
+
+        result = result && Compare(dst1, dst2, EPS, true, 64, DifferenceBoth);
+
+        return result;
+    }
+
+    bool SynetUnaryOperation32fLayerForwardAutoTest(const FuncUO& f1, const FuncUO& f2)
+    {
+        bool result = true;
+
+        for (int type = (int)SimdSynetUnaryOperation32fAbs; type <= (int)SimdSynetUnaryOperation32fZero; type++)
+        {
+            result = result && SynetUnaryOperation32fLayerForwardAutoTest(H*W, (SimdSynetUnaryOperation32fType)type, f1, f2);
+            result = result && SynetUnaryOperation32fLayerForwardAutoTest(H*W + O, (SimdSynetUnaryOperation32fType)type, f1, f2);
+        }
+
+        return result;
+    }
+
+    bool SynetUnaryOperation32fLayerForwardAutoTest()
+    {
+        bool result = true;
+
+        result = result && SynetUnaryOperation32fLayerForwardAutoTest(FUNC_UO(Simd::Base::SynetUnaryOperation32fLayerForward), FUNC_UO(SimdSynetUnaryOperation32fLayerForward));
+
+#ifdef SIMD_SSE2_ENABLE
+        if (Simd::Sse2::Enable)
+            result = result && SynetUnaryOperation32fLayerForwardAutoTest(FUNC_UO(Simd::Sse2::SynetUnaryOperation32fLayerForward), FUNC_UO(SimdSynetUnaryOperation32fLayerForward));
+#endif 
+
+#ifdef SIMD_AVX2_ENABLE
+        if (Simd::Avx2::Enable)
+            result = result && SynetUnaryOperation32fLayerForwardAutoTest(FUNC_UO(Simd::Avx2::SynetUnaryOperation32fLayerForward), FUNC_UO(SimdSynetUnaryOperation32fLayerForward));
+#endif
+
+#ifdef SIMD_AVX512F_ENABLE
+        if (Simd::Avx512f::Enable)
+            result = result && SynetUnaryOperation32fLayerForwardAutoTest(FUNC_UO(Simd::Avx512f::SynetUnaryOperation32fLayerForward), FUNC_UO(SimdSynetUnaryOperation32fLayerForward));
+#endif
+
+#ifdef SIMD_NEON_ENABLE
+        if (Simd::Neon::Enable)
+            result = result && SynetUnaryOperation32fLayerForwardAutoTest(FUNC_UO(Simd::Neon::SynetUnaryOperation32fLayerForward), FUNC_UO(SimdSynetUnaryOperation32fLayerForward));
 #endif 
 
         return result;
